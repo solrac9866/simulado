@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simulado SARESP 2026 · E.E. Professora Rosa Maria de Souza</title>
+<script src="supabase.min.js"></script>
+<style>
+:root{--azul:#0b5cab;--azul-esc:#08417a;--azul-cl:#e8f1fb;--txt:#1b2733;--mut:#5d6b7a;--bor:#d5dde6;--ok:#1f8a4c;--warn:#b26a00;--bg:#f3f6fa}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--txt);background:var(--bg);line-height:1.5;-webkit-text-size-adjust:100%}
+.wrap{max-width:760px;margin:0 auto;padding:16px 16px 120px}
+.card{background:#fff;border:1px solid var(--bor);border-radius:14px;padding:18px;overflow-wrap:anywhere}
+.escola{font-size:.78rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--azul);margin:0 0 8px}
+h1{font-size:1.35rem;margin:0 0 4px;color:var(--azul-esc)}
+h2{font-size:1.1rem;margin:0 0 10px}
+.sub{color:var(--mut);margin:0 0 16px}
+.small{font-size:.85rem}
+label{display:block;font-weight:600;margin:14px 0 6px}
+input{width:100%;font:inherit;padding:13px 14px;border:1.5px solid var(--bor);border-radius:10px;background:#fff}
+input:focus{outline:none;border-color:var(--azul)}
+button{font:inherit;cursor:pointer}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--azul);color:#fff;border:0;border-radius:12px;padding:14px 20px;font-weight:700;min-height:48px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.sec{background:#fff;color:var(--azul);border:1.5px solid var(--azul)}
+.btn.ok{background:var(--ok)}
+.btn.block{width:100%;margin-top:10px}
+.err{background:#fdecea;color:#8a1c14;border-radius:10px;padding:10px 12px;margin-top:12px}
+.info{background:var(--azul-cl);color:var(--azul-esc);border-radius:10px;padding:10px 12px;margin-top:12px}
+.acts{margin-top:6px}
+/* escolha da prova */
+.serie{margin:16px 0}
+.sh{font-weight:800;color:var(--azul-esc);margin-bottom:6px;font-size:1.05rem}
+.dias{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dia{display:flex;flex-direction:column;align-items:center;gap:2px;border:2px solid var(--azul);background:#fff;color:var(--azul-esc);border-radius:12px;padding:12px 8px;min-height:66px}
+.dia b{font-size:1.05rem}
+.dia span{font-size:.78rem;color:var(--ok);font-weight:700}
+.dia.off{border-color:var(--bor);color:var(--mut);background:#f7f9fb;cursor:not-allowed}
+.dia.off span{color:var(--mut)}
+/* topo fixo */
+.top{position:sticky;top:0;z-index:20;background:var(--azul-esc);color:#fff;padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top,0px))}
+.top .in{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:12px;justify-content:space-between}
+.top .t{font-weight:700;font-size:.95rem}
+.top .s{font-size:.78rem;opacity:.85}
+.timer{font-variant-numeric:tabular-nums;font-weight:800;font-size:1.05rem;background:rgba(255,255,255,.15);padding:6px 12px;border-radius:999px;white-space:nowrap}
+.timer.low{background:#c0392b}
+.prog{height:5px;background:rgba(255,255,255,.2)}
+.prog i{display:block;height:100%;background:#7fc4ff;width:0;transition:width .25s}
+/* questão */
+.bloco{display:inline-block;background:var(--azul);color:#fff;font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px;margin-bottom:10px}
+.qnum{font-weight:800;color:var(--azul);font-size:1.05rem;margin-bottom:8px}
+.sup{background:#f8fafc;border-left:4px solid var(--azul);border-radius:8px;padding:12px 14px;margin:0 0 14px;font-size:.96rem}
+.sup p{margin:0 0 .7em}.sup p:last-child{margin:0}
+.fig{display:block;max-width:100%;height:auto;margin:0 auto 14px;border-radius:8px;border:1px solid var(--bor);background:#fff}
+.stmt{font-size:1.02rem;font-weight:600;margin:0 0 14px}
+.stmt p{margin:0}
+.tw{overflow-x:auto;margin:0 0 .8em}
+table{border-collapse:collapse;font-size:.92rem;min-width:60%}
+th,td{border:1px solid var(--bor);padding:6px 10px;text-align:center}
+th{background:var(--azul-cl)}
+ol{margin:.3em 0 .7em;padding-left:1.4em}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;background:#fff;border:2px solid var(--bor);border-radius:12px;padding:12px 14px;min-height:54px;transition:border-color .12s,background .12s}
+.opt .l{flex:0 0 auto;width:32px;height:32px;border-radius:50%;background:var(--azul-cl);color:var(--azul-esc);font-weight:800;display:grid;place-items:center}
+.opt .x{padding-top:3px}
+.opt.sel{border-color:var(--azul);background:var(--azul-cl)}
+.opt.sel .l{background:var(--azul);color:#fff}
+/* questão em imagem */
+.qimgwrap{background:#f3f6fa;border:1px solid var(--bor);border-radius:10px;min-height:160px;overflow:hidden}
+.qimg{display:block;width:100%;height:auto;background:#fff;cursor:zoom-in}
+.zhint{font-size:.8rem;color:var(--mut);text-align:center;margin:6px 0 0}
+.resp{font-weight:700;margin:14px 0 6px;color:var(--azul-esc)}
+.abcd{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.ab{border:2px solid var(--bor);background:#fff;border-radius:12px;font-weight:800;font-size:1.3rem;padding:14px 0;color:var(--azul-esc);min-height:58px;transition:background .12s,border-color .12s}
+.ab.sel{background:var(--azul);border-color:var(--azul);color:#fff}
+/* barra inferior */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#fff;border-top:1px solid var(--bor);padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+.bar .in{max-width:760px;margin:0 auto;display:flex;gap:10px;align-items:center}
+.bar .in{gap:8px}
+.bar .btn{flex:1;padding:12px 8px;white-space:nowrap}
+.bar .mid{flex:0 0 auto;min-width:84px}
+@media(max-width:480px){.wrap{padding:10px 8px 120px}.card{padding:12px}}
+.sync{font-size:.75rem;color:var(--mut);text-align:center;padding:0 0 6px;max-width:760px;margin:0 auto}
+.sync.bad{color:var(--warn);font-weight:700}
+/* cartão-resposta */
+.ov{position:fixed;inset:0;background:rgba(10,25,45,.55);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:#fff;width:100%;max-width:760px;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:12px 0}
+@media(min-width:520px){.grid{grid-template-columns:repeat(8,1fr)}}
+.cell{border:2px solid var(--bor);background:#fff;border-radius:10px;padding:6px 0;font-weight:800;color:var(--mut)}
+.cell small{display:block;font-size:.72rem;font-weight:700;min-height:1em}
+.cell.done{background:var(--azul);border-color:var(--azul);color:#fff}
+.cell.cur{box-shadow:0 0 0 3px #7fc4ff}
+.leg{display:flex;gap:14px;font-size:.8rem;color:var(--mut);flex-wrap:wrap}
+.leg i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:4px}
+.center{text-align:center}
+.big{font-size:3rem;font-weight:900;color:var(--azul)}
+.muted{color:var(--mut)}
+/* ampliar imagem */
+.zoom{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.92)}
+.zx{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:12px;z-index:61;background:#fff;color:#000;border:0;border-radius:999px;padding:10px 16px;font-weight:800}
+.zs{position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch;padding:60px 0 24px}
+.zs img{display:block;width:220vw;max-width:1700px;height:auto;background:#fff;margin:0 auto}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const SB_URL = 'https://pkhxjvynplncvdpxutjn.supabase.co';
+const SB_KEY = 'sb_publishable_3TPRYBnHfrGy4k5xbD1Xkw_6KfvHt4z';
+const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+const LS = 'saresp2026_estado_v2';
+const ESCOLA = 'E.E. Professora Rosa Maria de Souza';
+const app = document.getElementById('app');
+
+const S = { exams: [], ex: null, qs: [], sub: null, ans: {}, cur: 0, pending: new Set(), timer: null, retry: null, finishing: false, failed: false };
+const lbl = e => e.grade + 'º ano · ' + e.day + 'º dia';
+
+/* ---------- utilitários de texto ---------- */
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function inl(t){
+  let h = esc(t);
+  h = h.replace(/\*\*\*(.+?)\*\*\*/g,'<b><i>$1</i></b>')
+       .replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
+       .replace(/\*(.+?)\*/g,'<i>$1</i>')
+       .replace(/\bT_([FC])\b/g,'T<sub>$1</sub>');
+  return h;
+}
+function md(t){
+  if(!t) return '';
+  return t.split(/\n\s*\n/).map(b=>{
+    const lines = b.split('\n');
+    if(lines[0].trim().startsWith('|')){
+      const rows = lines.filter(l=>l.trim().startsWith('|')).map(l=>l.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim()));
+      return '<div class="tw"><table>'+rows.map((r,i)=>'<tr>'+r.map(c=>i===0?`<th>${inl(c)}</th>`:`<td>${inl(c)}</td>`).join('')+'</tr>').join('')+'</table></div>';
+    }
+    if(lines.every(l=>/^\d+\.\s/.test(l.trim()))){
+      return '<ol>'+lines.map(l=>`<li>${inl(l.trim().replace(/^\d+\.\s/,''))}</li>`).join('')+'</ol>';
+    }
+    return '<p>'+lines.map(inl).join('<br>')+'</p>';
+  }).join('');
+}
+
+/* ---------- estado local (sobrevive a recarregar a página) ---------- */
+function save(){
+  try{ localStorage.setItem(LS, JSON.stringify({ sub:S.sub, ans:S.ans, cur:S.cur, pending:[...S.pending] })); }catch(e){}
+}
+function load(){
+  try{
+    const o = JSON.parse(localStorage.getItem(LS)||'null');
+    if(o && o.sub && o.sub.id && o.sub.exam_id){ S.sub=o.sub; S.ans=o.ans||{}; S.cur=o.cur||0; S.pending=new Set(o.pending||[]); return true; }
+  }catch(e){}
+  return false;
+}
+function clearLocal(){ try{ localStorage.removeItem(LS); }catch(e){} }
+
+/* ---------- telas ---------- */
+function screenMsg(title, html, actions){
+  const acts = actions || [];
+  app.innerHTML = `<div class="wrap"><div class="card center">
+    <div class="escola">${ESCOLA}</div>
+    <h1>${esc(title)}</h1><p class="sub">${html}</p>
+    <div class="acts">${acts.map((a,i)=>`<button class="btn ${a.sec?'sec':''} block" data-a="${i}">${esc(a.label)}</button>`).join('')}</div>
+  </div></div>`;
+  acts.forEach((a,i)=>{ app.querySelector(`[data-a="${i}"]`).onclick = a.fn; });
+}
+
+async function fetchExams(){
+  const { data, error } = await sb.from('exams').select('id,grade,day,title,total,is_open,show_score,duration_minutes,sort').order('sort');
+  if(error || !data || !data.length) return false;
+  S.exams = data; return true;
+}
+function loadBundle(id){
+  if(!S.qs.some(q=>q.full_image)) return Promise.resolve(true);
+  if(window.QIMG && window.QIMG[id]) return Promise.resolve(true);
+  return new Promise(res=>{
+    const s = document.createElement('script'); s.src = 'q-'+id+'.js';
+    s.onload = ()=>res(!!(window.QIMG && window.QIMG[id])); s.onerror = ()=>res(false);
+    document.head.appendChild(s);
+  });
+}
+function imgSrc(q){
+  const m = window.QIMG && S.ex && window.QIMG[S.ex.id];
+  return (m && m[q.number]) || q.image_url;
+}
+async function fetchQuestions(id){
+  const { data, error } = await sb.from('questions')
+    .select('number,block,subject,support_text,image_url,full_image,statement,options').eq('exam_id', id).order('number');
+  if(error || !data || !data.length) return false;
+  S.qs = data; return true;
+}
+
+function screenPick(){
+  const grades = [...new Set(S.exams.map(e=>e.grade))].sort();
+  app.innerHTML = `<div class="wrap"><div class="card">
+    <div class="escola">${ESCOLA}</div>
+    <h1>Simulado SARESP 2026</h1>
+    <p class="sub">Escolha a sua série e o dia da prova.</p>
+    ${grades.map(g=>`<div class="serie"><div class="sh">${g}º ano</div><div class="dias">
+      ${S.exams.filter(e=>e.grade===g).map(e=>`<button class="dia ${e.is_open?'':'off'}" data-id="${e.id}" ${e.is_open?'':'disabled'}><b>${e.day}º dia</b><span>${e.is_open?'Liberada':'Aguarde'}</span></button>`).join('')}
+    </div></div>`).join('')}
+    <p class="muted small" style="margin:14px 0 0">“Aguarde” significa que o professor ainda não liberou aquela prova.</p>
+    <button class="btn sec block" id="rf">↻ Atualizar</button>
+  </div></div>`;
+  app.querySelectorAll('.dia:not(.off)').forEach(b=> b.onclick = ()=> pickExam(b.dataset.id));
+  document.getElementById('rf').onclick = init;
+}
+
+async function pickExam(id){
+  const ex = S.exams.find(e=>e.id===id);
+  if(!ex){ screenPick(); return; }
+  if(!ex.is_open){
+    screenMsg('Prova ainda não liberada','Aguarde a orientação do professor e atualize esta página.',[
+      { label:'Tentar de novo', fn:init },
+      { label:'Escolher outra prova', sec:true, fn:()=>{ try{ history.replaceState(null,'',location.pathname); }catch(e){} screenPick(); } }
+    ]); return;
+  }
+  screenMsg('Carregando a prova…','Aguarde, as questões estão sendo baixadas. Pode levar alguns segundos.');
+  if(!(await fetchQuestions(id)) || !(await loadBundle(id))){
+    screenMsg('Sem conexão','Não foi possível carregar a prova. Verifique a internet.',[{ label:'Tentar de novo', fn:()=>pickExam(id) }]); return;
+  }
+  S.ex = ex; screenLogin();
+}
+
+function screenLogin(){
+  const ex = S.ex, h = Math.floor(ex.duration_minutes/60), m = String(ex.duration_minutes%60).padStart(2,'0');
+  app.innerHTML = `<div class="wrap"><div class="card">
+    <div class="escola">${ESCOLA}</div>
+    <h1>${esc(ex.title)}</h1>
+    <p class="sub">${S.qs.length} questões · tempo: ${h}h${m}</p>
+    <label for="nome">Nome completo</label>
+    <input id="nome" autocomplete="name" placeholder="Digite seu nome e sobrenome">
+    <label for="turma">Turma</label>
+    <input id="turma" placeholder="Ex.: ${ex.grade}º A" maxlength="30">
+    <div class="info">Suas respostas são salvas automaticamente a cada alternativa marcada. Você pode voltar em qualquer questão antes de finalizar.</div>
+    <div id="msg"></div>
+    <button class="btn block" id="go">Começar o simulado</button>
+    <button class="btn sec block" id="bk">← Trocar de prova</button>
+  </div></div>`;
+  document.getElementById('bk').onclick = ()=>{ try{ history.replaceState(null,'',location.pathname); }catch(e){} init(); };
+  const go = document.getElementById('go');
+  go.onclick = async ()=>{
+    const nome = document.getElementById('nome').value.trim().replace(/\s+/g,' ');
+    const turma = document.getElementById('turma').value.trim();
+    const msg = document.getElementById('msg');
+    if(nome.split(' ').length<2 || nome.length<5){ msg.innerHTML='<div class="err">Digite seu nome completo (nome e sobrenome).</div>'; return; }
+    if(!turma){ msg.innerHTML='<div class="err">Informe sua turma.</div>'; return; }
+    go.disabled=true; go.textContent='Iniciando…';
+    const { data, error } = await sb.rpc('start_submission', { p_exam:ex.id, p_name:nome, p_class:turma });
+    if(error){
+      go.disabled=false; go.textContent='Começar o simulado';
+      msg.innerHTML = '<div class="err">'+(/fechado/i.test(error.message)?'Esta prova ainda não foi liberada. Aguarde a orientação do professor.':'Não foi possível iniciar. Verifique a internet e tente de novo.')+'</div>';
+      return;
+    }
+    S.sub = { id:data, name:nome, cls:turma, start:new Date().toISOString(), exam_id:ex.id };
+    S.ans = {}; S.cur = 0; S.pending = new Set(); save();
+    screenExam();
+  };
+}
+
+function fmt(ms){
+  if(ms<0) ms=0; const s=Math.floor(ms/1000), h=Math.floor(s/3600), m=Math.floor(s%3600/60), x=s%60;
+  return (h?h+':':'')+String(m).padStart(2,'0')+':'+String(x).padStart(2,'0');
+}
+
+function screenExam(){
+  app.innerHTML = `
+    <div class="top"><div class="in">
+      <div><div class="t" id="tt"></div><div class="s" id="ts"></div></div>
+      <div class="timer" id="tm">--:--</div></div></div>
+    <div class="prog"><i id="pg"></i></div>
+    <div class="wrap"><div class="card" id="qc"></div></div>
+    <div class="bar">
+      <div class="sync" id="sy"></div>
+      <div class="in">
+        <button class="btn sec" id="prev">◀ Anterior</button>
+        <button class="btn sec mid" id="grid">Cartão</button>
+        <button class="btn" id="next">Próxima ▶</button>
+      </div></div><div id="ovh"></div>`;
+  document.getElementById('prev').onclick = ()=>go(S.cur-1);
+  document.getElementById('next').onclick = ()=>{ if(S.cur===S.qs.length-1) confirmFinish(); else go(S.cur+1); };
+  document.getElementById('grid').onclick = openGrid;
+  const end = new Date(S.sub.start).getTime() + S.ex.duration_minutes*60000;
+  clearInterval(S.timer);
+  const tick = ()=>{
+    const left = end - Date.now(), el = document.getElementById('tm');
+    if(!el) return;
+    el.textContent = fmt(left); el.classList.toggle('low', left < 10*60000);
+    if(left<=0){ clearInterval(S.timer); finish(true); }
+  };
+  tick(); S.timer = setInterval(tick, 1000);
+  clearInterval(S.retry); S.retry = setInterval(flush, 8000);
+  renderQ(); if(S.pending.size) flush();
+}
+
+function answeredCount(){ return Object.keys(S.ans).length; }
+
+function openZoom(url){
+  const o = document.createElement('div'); o.className = 'zoom';
+  o.innerHTML = `<button class="zx">✕ Fechar</button><div class="zs"><img src="${esc(url)}" alt="Questão ampliada"></div>`;
+  document.body.appendChild(o);
+  const kd = e=>{ if(e.key==='Escape') close(); };
+  const close = ()=>{ o.remove(); document.removeEventListener('keydown', kd); };
+  document.addEventListener('keydown', kd);
+  o.querySelector('.zx').onclick = close;
+}
+
+function imgBlock(q, bust){
+  const base = imgSrc(q);
+  const src = esc(base) + (bust && !base.startsWith('data:') ? (base.includes('?')?'&':'?')+'v='+bust : '');
+  return `<div class="qimgwrap" id="qiw"><img class="qimg" id="qim" src="${src}" alt="Questão ${q.number}"></div>
+    <div class="zhint">🔍 Toque na imagem para ampliar</div>`;
+}
+
+function renderQ(){
+  const q = S.qs[S.cur]; if(!q) return;
+  document.getElementById('tt').textContent = S.sub.name.split(' ')[0]+' · '+S.sub.cls;
+  document.getElementById('ts').textContent = lbl(S.ex)+' · '+answeredCount()+' de '+S.qs.length+' respondidas';
+  document.getElementById('pg').style.width = (answeredCount()/S.qs.length*100)+'%';
+  let body;
+  if(q.full_image){
+    body = imgBlock(q) + `<div class="resp">Sua resposta:</div>
+      <div class="abcd">${['A','B','C','D'].map(L=>`<button class="ab ${S.ans[q.number]===L?'sel':''}" data-l="${L}">${L}</button>`).join('')}</div>`;
+  } else {
+    const opts = ['A','B','C','D'].map(L=>`<button class="opt ${S.ans[q.number]===L?'sel':''}" data-l="${L}"><span class="l">${L}</span><span class="x">${inl((q.options||{})[L]||'')}</span></button>`).join('');
+    body = `${q.support_text?`<div class="sup">${md(q.support_text)}</div>`:''}
+      ${q.image_url?`<img class="fig" src="${esc(q.image_url)}" alt="Figura da questão ${q.number}" loading="eager">`:''}
+      <div class="stmt">${md(q.statement)}</div>
+      <div class="opts">${opts}</div>`;
+  }
+  document.getElementById('qc').innerHTML = `
+    <span class="bloco">Bloco ${q.block} · ${esc(q.subject)}</span>
+    <div class="qnum">Questão ${String(q.number).padStart(2,'0')}</div>${body}`;
+  document.querySelectorAll('.opt,.ab').forEach(b=> b.onclick = ()=> choose(q.number, b.dataset.l));
+  const im = document.getElementById('qim');
+  if(im){
+    im.onclick = ()=> openZoom(imgSrc(q));
+    im.onerror = ()=>{
+      document.getElementById('qiw').innerHTML = '<div class="err" style="margin:10px">Não foi possível carregar a imagem da questão. Verifique a internet.<br><button class="btn sec" id="rl" style="margin-top:8px">Tentar de novo</button></div>';
+      document.getElementById('rl').onclick = ()=>{
+        const w = document.getElementById('qiw'); w.outerHTML = imgBlock(q, Date.now()).split('<div class="zhint">')[0];
+        const n = document.getElementById('qim'); n.onclick = ()=> openZoom(imgSrc(q)); n.onerror = im.onerror;
+      };
+    };
+  }
+  // pré-carrega as vizinhas para a troca de questão ser rápida
+  [S.cur+1, S.cur+2, S.cur-1].forEach(i=>{ const n = S.qs[i]; if(n && n.full_image && !String(imgSrc(n)).startsWith('data:')){ const p = new Image(); p.src = imgSrc(n); } });
+  const last = S.cur===S.qs.length-1;
+  document.getElementById('prev').disabled = S.cur===0;
+  const nx = document.getElementById('next');
+  nx.textContent = last ? 'Finalizar ✓' : 'Próxima ▶';
+  nx.classList.toggle('ok', last);
+  updateSync();
+  window.scrollTo({ top:0, behavior:'instant' });
+}
+
+function go(i){
+  if(i<0 || i>=S.qs.length) return;
+  S.cur = i; save(); renderQ();
+}
+
+function choose(n, L){
+  S.ans[n] = L; S.pending.add(n); save();
+  document.querySelectorAll('.opt,.ab').forEach(b=> b.classList.toggle('sel', b.dataset.l===L));
+  document.getElementById('ts').textContent = lbl(S.ex)+' · '+answeredCount()+' de '+S.qs.length+' respondidas';
+  document.getElementById('pg').style.width = (answeredCount()/S.qs.length*100)+'%';
+  push(n);
+}
+
+/* ---------- salvamento no servidor (com fila de reenvio) ---------- */
+async function push(n){
+  if(!S.pending.has(n)) return true;
+  const { error } = await sb.rpc('save_answer', { p_submission:S.sub.id, p_question:n, p_choice:S.ans[n] });
+  if(!error){ S.pending.delete(n); if(!S.pending.size) S.failed = false; save(); updateSync(); return true; }
+  S.failed = true; updateSync(); return false;
+}
+async function flush(){
+  if(!S.sub) return true;
+  let ok = true;
+  for(const n of [...S.pending]){ if(!(await push(n))) ok=false; }
+  return ok;
+}
+function updateSync(){
+  const el = document.getElementById('sy'); if(!el) return;
+  if(S.pending.size && S.failed){ el.className='sync bad'; el.textContent='⚠ '+S.pending.size+' resposta(s) ainda não enviada(s) — verifique a internet'; }
+  else if(S.pending.size){ el.className='sync'; el.textContent='Salvando…'; }
+  else { el.className='sync'; el.textContent='✓ Respostas salvas'; }
+}
+
+/* ---------- cartão-resposta ---------- */
+function openGrid(){
+  const cells = S.qs.map((q,i)=>`<button class="cell ${S.ans[q.number]?'done':''} ${i===S.cur?'cur':''}" data-i="${i}">${q.number}<small>${S.ans[q.number]||''}</small></button>`).join('');
+  document.getElementById('ovh').innerHTML = `<div class="ov" id="ov"><div class="sheet">
+    <h2>Cartão-resposta</h2>
+    <div class="leg"><span><i style="background:var(--azul)"></i>respondida</span><span><i style="border:2px solid var(--bor)"></i>em branco</span></div>
+    <div class="grid">${cells}</div>
+    <p class="muted" style="margin:0 0 12px">${answeredCount()} de ${S.qs.length} respondidas</p>
+    <button class="btn ok block" id="fin">Finalizar simulado</button>
+    <button class="btn sec block" id="cl">Voltar às questões</button>
+  </div></div>`;
+  const close = ()=>{ document.getElementById('ovh').innerHTML=''; };
+  document.getElementById('cl').onclick = close;
+  document.getElementById('ov').onclick = e=>{ if(e.target.id==='ov') close(); };
+  document.querySelectorAll('.cell').forEach(c=> c.onclick = ()=>{ close(); go(+c.dataset.i); });
+  document.getElementById('fin').onclick = ()=>{ close(); confirmFinish(); };
+}
+
+/* ---------- finalizar ---------- */
+function confirmFinish(){
+  const blank = S.qs.length - answeredCount();
+  document.getElementById('ovh').innerHTML = `<div class="ov"><div class="sheet">
+    <h2>Finalizar o simulado?</h2>
+    <p>${blank? `Você ainda tem <b>${blank}</b> questão(ões) em branco.` : 'Você respondeu todas as questões.'}</p>
+    <p class="muted">Depois de finalizar, não será possível alterar as respostas.</p>
+    <button class="btn ok block" id="yes">Sim, finalizar</button>
+    <button class="btn sec block" id="no">Continuar respondendo</button></div></div>`;
+  document.getElementById('no').onclick = ()=>{ document.getElementById('ovh').innerHTML=''; };
+  document.getElementById('yes').onclick = ()=> finish(false);
+}
+
+async function finish(auto){
+  if(S.finishing) return; S.finishing = true;
+  document.getElementById('ovh').innerHTML = `<div class="ov"><div class="sheet center"><h2>${auto?'Tempo esgotado. ':''}Enviando suas respostas…</h2><p class="muted">Não feche esta página.</p></div></div>`;
+  const ok = await flush();
+  if(!ok){
+    S.finishing = false;
+    document.getElementById('ovh').innerHTML = `<div class="ov"><div class="sheet center"><h2>Sem conexão</h2>
+      <p>Não foi possível enviar todas as respostas. Suas marcações estão guardadas neste aparelho. Conecte-se à internet e tente de novo.</p>
+      <button class="btn block" id="rt">Tentar de novo</button></div></div>`;
+    document.getElementById('rt').onclick = ()=> finish(auto);
+    return;
+  }
+  const { data, error } = await sb.rpc('finish_submission', { p_submission:S.sub.id });
+  if(error){
+    S.finishing = false;
+    document.getElementById('ovh').innerHTML = `<div class="ov"><div class="sheet center"><h2>Não foi possível finalizar</h2><p>Tente novamente em instantes.</p><button class="btn block" id="rt">Tentar de novo</button></div></div>`;
+    document.getElementById('rt').onclick = ()=> finish(auto);
+    return;
+  }
+  clearInterval(S.timer); clearInterval(S.retry);
+  clearLocal(); screenDone(data);
+}
+
+function screenDone(r){
+  const nome = S.sub ? esc(S.sub.name.split(' ')[0]) : '';
+  const prova = S.ex ? esc(lbl(S.ex)) : '';
+  const body = (r && r.show_score && r.score!=null)
+    ? `<div class="big">${r.score}<span class="muted" style="font-size:1.4rem"> / ${r.total}</span></div><p class="sub">acertos</p>`
+    : `<p class="sub">Suas respostas foram enviadas com sucesso.<br>O resultado será divulgado pelo professor.</p>`;
+  app.innerHTML = `<div class="wrap"><div class="card center">
+    <div class="escola">${ESCOLA}</div>
+    <h1>Simulado finalizado${nome?', '+nome:''}!</h1>
+    <p class="muted small" style="margin:0 0 10px">${prova}</p>${body}
+    <p class="muted">Você já pode fechar esta página.</p></div></div>`;
+  S.sub = null; S.finishing = false;
+}
+
+/* ---------- inicialização ---------- */
+async function init(){
+  clearInterval(S.timer); clearInterval(S.retry);
+  screenMsg('Carregando…','Aguarde um instante.');
+  if(!(await fetchExams())){
+    screenMsg('Sem conexão','Não foi possível carregar o simulado. Verifique a internet.',[{ label:'Tentar de novo', fn:init }]); return;
+  }
+  if(load()){
+    const ex = S.exams.find(e=>e.id===S.sub.exam_id);
+    if(!ex){ clearLocal(); S.sub = null; }
+    else if((await fetchQuestions(ex.id)) && (await loadBundle(ex.id))){ S.ex = ex; screenExam(); return; }
+    else { screenMsg('Sem conexão','Não foi possível carregar a prova. Suas respostas estão guardadas neste aparelho.',[{ label:'Tentar de novo', fn:init }]); return; }
+  }
+  const pid = new URLSearchParams(location.search).get('prova');
+  if(pid && S.exams.some(e=>e.id===pid)){ pickExam(pid); return; }
+  screenPick();
+}
+init();
+</script>
+</body>
+</html>
