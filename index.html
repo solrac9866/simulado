@@ -114,6 +114,7 @@ const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false
 const LS = 'saresp2026_estado_v2';
 const nomeEscola = () => (S.school && S.school.name) || 'Simulado SARESP 2026';
 const LSE = 'saresp2026_escola';
+const TURMAS = ['A','B','C','D','E','F','G'];
 const app = document.getElementById('app');
 
 const S = { school: null, schools: [], exams: [], ex: null, qs: [], sub: null, ans: {}, cur: 0, pending: new Set(), timer: null, retry: null, finishing: false, failed: false };
@@ -262,7 +263,7 @@ function screenLogin(){
     <label for="nome">Nome completo</label>
     <input id="nome" autocomplete="name" placeholder="Digite seu nome e sobrenome">
     <label for="turma">Turma</label>
-    <input id="turma" placeholder="Ex.: ${ex.grade}º A" maxlength="30">
+    <select id="turma"><option value="">Selecione a sua turma</option>${TURMAS.map(L=>`<option value="${ex.grade}${L}">${ex.grade}º ${L}</option>`).join('')}</select>
     <div class="info">Suas respostas são salvas automaticamente a cada alternativa marcada. Você pode voltar em qualquer questão antes de finalizar.</div>
     <div id="msg"></div>
     <button class="btn block" id="go">Começar o simulado</button>
@@ -280,7 +281,7 @@ function screenLogin(){
     const { data, error } = await sb.rpc('start_submission', { p_exam:ex.id, p_name:nome, p_class:turma, p_school:S.school.id });
     if(error){
       go.disabled=false; go.textContent='Começar o simulado';
-      msg.innerHTML = '<div class="err">'+(/inválid/i.test(error.message)?'Dados inválidos. Confira seu nome e turma.':/fechado/i.test(error.message)?'Esta prova ainda não foi liberada. Aguarde a orientação do professor.':'Não foi possível iniciar. Verifique a internet e tente de novo.')+'</div>';
+      msg.innerHTML = '<div class="err">'+(/Turma/i.test(error.message)?'Escolha a sua turma na lista.':/inválid/i.test(error.message)?'Dados inválidos. Confira seu nome e turma.':/fechado/i.test(error.message)?'Esta prova ainda não foi liberada. Aguarde a orientação do professor.':'Não foi possível iniciar. Verifique a internet e tente de novo.')+'</div>';
       return;
     }
     S.sub = { id:data, name:nome, cls:turma, start:new Date().toISOString(), exam_id:ex.id };
