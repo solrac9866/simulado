@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Simulado SARESP 2026 · E.E. Professora Rosa Maria de Souza</title>
+<title>Simulado SARESP 2026</title>
 <script src="supabase.min.js"></script>
 <style>
 :root{--azul:#0b5cab;--azul-esc:#08417a;--azul-cl:#e8f1fb;--txt:#1b2733;--mut:#5d6b7a;--bor:#d5dde6;--ok:#1f8a4c;--warn:#b26a00;--bg:#f3f6fa}
@@ -18,8 +18,8 @@ h2{font-size:1.1rem;margin:0 0 10px}
 .sub{color:var(--mut);margin:0 0 16px}
 .small{font-size:.85rem}
 label{display:block;font-weight:600;margin:14px 0 6px}
-input{width:100%;font:inherit;padding:13px 14px;border:1.5px solid var(--bor);border-radius:10px;background:#fff}
-input:focus{outline:none;border-color:var(--azul)}
+input,select{width:100%;font:inherit;padding:13px 14px;border:1.5px solid var(--bor);border-radius:10px;background:#fff}
+input:focus,select:focus{outline:none;border-color:var(--azul)}
 button{font:inherit;cursor:pointer}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--azul);color:#fff;border:0;border-radius:12px;padding:14px 20px;font-weight:700;min-height:48px}
 .btn:disabled{opacity:.5;cursor:not-allowed}
@@ -112,10 +112,11 @@ const SB_URL = 'https://pkhxjvynplncvdpxutjn.supabase.co';
 const SB_KEY = 'sb_publishable_3TPRYBnHfrGy4k5xbD1Xkw_6KfvHt4z';
 const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 const LS = 'saresp2026_estado_v2';
-const ESCOLA = 'E.E. Professora Rosa Maria de Souza';
+const nomeEscola = () => (S.school && S.school.name) || 'Simulado SARESP 2026';
+const LSE = 'saresp2026_escola';
 const app = document.getElementById('app');
 
-const S = { exams: [], ex: null, qs: [], sub: null, ans: {}, cur: 0, pending: new Set(), timer: null, retry: null, finishing: false, failed: false };
+const S = { school: null, schools: [], exams: [], ex: null, qs: [], sub: null, ans: {}, cur: 0, pending: new Set(), timer: null, retry: null, finishing: false, failed: false };
 const lbl = e => e.grade + 'º ano · ' + e.day + 'º dia';
 
 /* ---------- utilitários de texto ---------- */
@@ -145,12 +146,12 @@ function md(t){
 
 /* ---------- estado local (sobrevive a recarregar a página) ---------- */
 function save(){
-  try{ localStorage.setItem(LS, JSON.stringify({ sub:S.sub, ans:S.ans, cur:S.cur, pending:[...S.pending] })); }catch(e){}
+  try{ localStorage.setItem(LS, JSON.stringify({ sub:S.sub, ans:S.ans, cur:S.cur, pending:[...S.pending], school:S.school })); }catch(e){}
 }
 function load(){
   try{
     const o = JSON.parse(localStorage.getItem(LS)||'null');
-    if(o && o.sub && o.sub.id && o.sub.exam_id){ S.sub=o.sub; S.ans=o.ans||{}; S.cur=o.cur||0; S.pending=new Set(o.pending||[]); return true; }
+    if(o && o.sub && o.sub.id && o.sub.exam_id){ S.sub=o.sub; S.ans=o.ans||{}; S.cur=o.cur||0; S.pending=new Set(o.pending||[]); S.school=o.school||null; return true; }
   }catch(e){}
   return false;
 }
@@ -160,7 +161,7 @@ function clearLocal(){ try{ localStorage.removeItem(LS); }catch(e){} }
 function screenMsg(title, html, actions){
   const acts = actions || [];
   app.innerHTML = `<div class="wrap"><div class="card center">
-    <div class="escola">${ESCOLA}</div>
+    <div class="escola">${esc(nomeEscola())}</div>
     <h1>${esc(title)}</h1><p class="sub">${html}</p>
     <div class="acts">${acts.map((a,i)=>`<button class="btn ${a.sec?'sec':''} block" data-a="${i}">${esc(a.label)}</button>`).join('')}</div>
   </div></div>`;
@@ -170,8 +171,34 @@ function screenMsg(title, html, actions){
 async function fetchExams(){
   const { data, error } = await sb.from('exams').select('id,grade,day,title,total,is_open,show_score,duration_minutes,sort').order('sort');
   if(error || !data || !data.length) return false;
-  S.exams = data; return true;
+  const st = await sb.rpc('public_exam_status', { p_school: S.school.id });
+  if(st.error) return false;
+  const open = {}; (st.data||[]).forEach(r=>{ open[r.exam_id] = r.is_open; });
+  S.exams = data.map(e=>Object.assign({}, e, { is_open: !!open[e.id] })); return true;
 }
+async function fetchSchools(){
+  const { data, error } = await sb.rpc('public_schools');
+  if(error || !data) return false;
+  S.schools = data; return true;
+}
+function screenSchool(){
+  app.innerHTML = `<div class="wrap"><div class="card">
+    <div class="escola">Simulado SARESP 2026</div>
+    <h1>Qual é a sua escola?</h1>
+    <p class="sub">Escolha a escola onde você estuda.</p>
+    <label for="esc">Escola</label>
+    <select id="esc"><option value="">Selecione…</option>${S.schools.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select>
+    <div id="msg"></div>
+    <button class="btn block" id="ok">Continuar</button>
+  </div></div>`;
+  document.getElementById('ok').onclick = ()=>{
+    const v = document.getElementById('esc').value;
+    if(!v){ document.getElementById('msg').innerHTML = '<div class="err">Escolha a sua escola.</div>'; return; }
+    setSchool(S.schools.find(x=>x.id===v)); init();
+  };
+}
+function setSchool(sc){ S.school = sc; try{ localStorage.setItem(LSE, JSON.stringify(sc)); }catch(e){} }
+function forgetSchool(){ S.school = null; try{ localStorage.removeItem(LSE); }catch(e){} try{ history.replaceState(null,'',location.pathname); }catch(e){} init(); }
 function loadBundle(id){
   if(!S.qs.some(q=>q.full_image)) return Promise.resolve(true);
   if(window.QIMG && window.QIMG[id]) return Promise.resolve(true);
@@ -195,7 +222,7 @@ async function fetchQuestions(id){
 function screenPick(){
   const grades = [...new Set(S.exams.map(e=>e.grade))].sort();
   app.innerHTML = `<div class="wrap"><div class="card">
-    <div class="escola">${ESCOLA}</div>
+    <div class="escola">${esc(nomeEscola())}</div>
     <h1>Simulado SARESP 2026</h1>
     <p class="sub">Escolha a sua série e o dia da prova.</p>
     ${grades.map(g=>`<div class="serie"><div class="sh">${g}º ano</div><div class="dias">
@@ -203,7 +230,9 @@ function screenPick(){
     </div></div>`).join('')}
     <p class="muted small" style="margin:14px 0 0">“Aguarde” significa que o professor ainda não liberou aquela prova.</p>
     <button class="btn sec block" id="rf">↻ Atualizar</button>
+    <button class="btn sec block" id="ts">Trocar de escola</button>
   </div></div>`;
+  document.getElementById('ts').onclick = forgetSchool;
   app.querySelectorAll('.dia:not(.off)').forEach(b=> b.onclick = ()=> pickExam(b.dataset.id));
   document.getElementById('rf').onclick = init;
 }
@@ -227,7 +256,7 @@ async function pickExam(id){
 function screenLogin(){
   const ex = S.ex, h = Math.floor(ex.duration_minutes/60), m = String(ex.duration_minutes%60).padStart(2,'0');
   app.innerHTML = `<div class="wrap"><div class="card">
-    <div class="escola">${ESCOLA}</div>
+    <div class="escola">${esc(nomeEscola())}</div>
     <h1>${esc(ex.title)}</h1>
     <p class="sub">${S.qs.length} questões · tempo: ${h}h${m}</p>
     <label for="nome">Nome completo</label>
@@ -248,10 +277,10 @@ function screenLogin(){
     if(nome.split(' ').length<2 || nome.length<5){ msg.innerHTML='<div class="err">Digite seu nome completo (nome e sobrenome).</div>'; return; }
     if(!turma){ msg.innerHTML='<div class="err">Informe sua turma.</div>'; return; }
     go.disabled=true; go.textContent='Iniciando…';
-    const { data, error } = await sb.rpc('start_submission', { p_exam:ex.id, p_name:nome, p_class:turma });
+    const { data, error } = await sb.rpc('start_submission', { p_exam:ex.id, p_name:nome, p_class:turma, p_school:S.school.id });
     if(error){
       go.disabled=false; go.textContent='Começar o simulado';
-      msg.innerHTML = '<div class="err">'+(/fechado/i.test(error.message)?'Esta prova ainda não foi liberada. Aguarde a orientação do professor.':'Não foi possível iniciar. Verifique a internet e tente de novo.')+'</div>';
+      msg.innerHTML = '<div class="err">'+(/inválid/i.test(error.message)?'Dados inválidos. Confira seu nome e turma.':/fechado/i.test(error.message)?'Esta prova ainda não foi liberada. Aguarde a orientação do professor.':'Não foi possível iniciar. Verifique a internet e tente de novo.')+'</div>';
       return;
     }
     S.sub = { id:data, name:nome, cls:turma, start:new Date().toISOString(), exam_id:ex.id };
@@ -450,7 +479,7 @@ function screenDone(r){
     ? `<div class="big">${r.score}<span class="muted" style="font-size:1.4rem"> / ${r.total}</span></div><p class="sub">acertos</p>`
     : `<p class="sub">Suas respostas foram enviadas com sucesso.<br>O resultado será divulgado pelo professor.</p>`;
   app.innerHTML = `<div class="wrap"><div class="card center">
-    <div class="escola">${ESCOLA}</div>
+    <div class="escola">${esc(nomeEscola())}</div>
     <h1>Simulado finalizado${nome?', '+nome:''}!</h1>
     <p class="muted small" style="margin:0 0 10px">${prova}</p>${body}
     <p class="muted">Você já pode fechar esta página.</p></div></div>`;
@@ -461,10 +490,26 @@ function screenDone(r){
 async function init(){
   clearInterval(S.timer); clearInterval(S.retry);
   screenMsg('Carregando…','Aguarde um instante.');
+  const hadLocal = load();
+  if(!hadLocal || !S.school){
+    if(!(await fetchSchools())){
+      screenMsg('Sem conexão','Não foi possível carregar o simulado. Verifique a internet.',[{ label:'Tentar de novo', fn:init }]); return;
+    }
+    if(!hadLocal){
+      S.school = null;
+      const slug = new URLSearchParams(location.search).get('escola');
+      const fromLink = slug && S.schools.find(x=>x.slug===slug);
+      let saved = null; try{ saved = JSON.parse(localStorage.getItem(LSE)||'null'); }catch(e){}
+      const fromSaved = saved && S.schools.find(x=>x.id===saved.id);
+      if(fromLink) setSchool(fromLink); else if(fromSaved) S.school = fromSaved;
+      if(!S.school){ screenSchool(); return; }
+    }
+  }
+  if(!S.school){ const r = S.schools.find(x=>x.slug==='rosa-maria'); if(r){ S.school = r; } else { clearLocal(); S.sub = null; screenSchool(); return; } }
   if(!(await fetchExams())){
     screenMsg('Sem conexão','Não foi possível carregar o simulado. Verifique a internet.',[{ label:'Tentar de novo', fn:init }]); return;
   }
-  if(load()){
+  if(hadLocal){
     const ex = S.exams.find(e=>e.id===S.sub.exam_id);
     if(!ex){ clearLocal(); S.sub = null; }
     else if((await fetchQuestions(ex.id)) && (await loadBundle(ex.id))){ S.ex = ex; screenExam(); return; }
