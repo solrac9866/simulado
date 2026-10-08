@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Simulado SARESP 7A</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+html{color-scheme:light}
+*,*:before,*:after{box-sizing:border-box}
+body{margin:0}
+img{max-width:100%}
+
+/* Layout: cabeçalho editorial, faixa de indicadores, grade de gráficos 2 colunas, tabela ao fim */
+:root{--bg:#f6f7f5;--surface:#ffffff;--ink:#16211f;--muted:#5b6865;--grid:#e1e6e3;--line:#c9d1ce;--accent:#0e7c86;--accent-soft:#d6ecee;--warn:#b4570a;--warn-soft:#f7e3d0;--mid:#8aa3a5;
+--f-display:'Fraunces',Georgia,serif;--f-body:'IBM Plex Sans',system-ui,sans-serif;--f-num:'IBM Plex Mono',ui-monospace,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1514;--surface:#172120;--ink:#e8efed;--muted:#9bacaa;--grid:#26332f;--line:#3a4a46;--accent:#4fc3cc;--accent-soft:#17383b;--warn:#f0a04b;--warn-soft:#3b2a17;--mid:#5f7d80;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1514;--surface:#172120;--ink:#e8efed;--muted:#9bacaa;--grid:#26332f;--line:#3a4a46;--accent:#4fc3cc;--accent-soft:#17383b;--warn:#f0a04b;--warn-soft:#3b2a17;--mid:#5f7d80;color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:28px 48px}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header{display:flex;flex-direction:column;gap:6px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--f-display);font-weight:600;font-size:clamp(28px,5vw,40px);line-height:1.1;margin:0;text-wrap:balance}
+.sub{color:var(--muted);max-width:68ch;margin:0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--grid);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi b{font-family:var(--f-num);font-weight:500;font-size:28px;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi span{font-size:13px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--grid);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card h2{font-size:16px;font-weight:600;margin:0}
+.card p.note{margin:0;font-size:13px;color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+svg{display:block;width:100%;overflow:visible}
+svg text{fill:var(--muted);font-family:var(--f-num);font-size:11px}
+.hist{display:flex;align-items:flex-end;gap:8px;height:190px;border-bottom:1px solid var(--line);padding-top:8px}
+.hcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;min-width:0;gap:4px}
+.hbar{width:100%;background:var(--accent);border-radius:4px 4px 0 0;min-height:0}
+.hcol .v{font-family:var(--f-num);font-size:12px;color:var(--ink)}
+.hlab{display:flex;gap:8px}.hlab div{flex:1;text-align:center;font-family:var(--f-num);font-size:11px;color:var(--muted)}
+.stack{display:flex;gap:2px;height:44px}
+.seg{display:flex;align-items:center;justify-content:center;font-family:var(--f-num);font-size:13px;color:#fff;border-radius:4px;min-width:0}
+.rank{display:flex;flex-direction:column;gap:5px}
+.rrow{display:grid;grid-template-columns:minmax(96px,200px) 1fr 54px;gap:10px;align-items:center;font-size:13px}
+.rrow .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trk{position:relative;height:14px;background:var(--grid);border-radius:3px}
+.fill{height:100%;border-radius:3px;background:var(--accent)}
+.fill.w{background:var(--warn)}
+.ml{position:absolute;top:-3px;bottom:-3px;width:0;border-left:2px dashed var(--ink);opacity:.55}
+.rrow .val{font-family:var(--f-num);text-align:right;font-variant-numeric:tabular-nums}
+.att{display:flex;flex-direction:column;gap:8px}
+.att div{padding:10px 12px;border-radius:8px;background:var(--warn-soft);font-size:14px}
+.att b{font-weight:600}
+.ins{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.ins li{padding-left:14px;border-left:3px solid var(--accent)}
+button.tg{font:inherit;font-size:13px;background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:6px 12px;cursor:pointer;align-self:flex-start}
+button.tg:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--grid);white-space:nowrap}
+th{color:var(--muted);font-weight:500}
+td.n,th.n{text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);padding:6px 10px;border-radius:6px;font-size:12px;z-index:9;opacity:0;transition:opacity .08s;max-width:240px}
+.foot{font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.foot p{margin:0}
+
+.disc{display:flex;flex-direction:column;gap:12px}
+.drow{display:grid;grid-template-columns:minmax(110px,170px) 1fr 120px;gap:10px;align-items:center;font-size:14px}
+.drow .trk{height:18px}
+.drow .val{font-family:var(--f-num);font-variant-numeric:tabular-nums;text-align:right;font-size:13px;white-space:nowrap}
+.hq{display:flex;flex-direction:column;gap:6px}
+.hqr{display:grid;grid-template-columns:44px minmax(90px,140px) 56px 1fr;gap:10px;align-items:baseline;font-size:13px;padding:6px 0;border-bottom:1px solid var(--grid)}
+.hqr b{font-family:var(--f-num);font-weight:500}
+.hqr .pc{font-family:var(--f-num);color:var(--warn);font-variant-numeric:tabular-nums}
+.hqr span.d{color:var(--muted)}
+@media (max-width:560px){.drow{grid-template-columns:1fr;gap:4px}.drow .val{text-align:left}.hqr{grid-template-columns:40px 1fr 48px}.hqr .x{grid-column:2/4}}
+
+[hidden]{display:none!important}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tabs button{font:inherit;font-size:14px;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
+.tabs button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.cmp{display:flex;flex-direction:column;gap:3px}
+.crow{display:grid;grid-template-columns:minmax(96px,200px) 1fr 110px;gap:10px;align-items:center;font-size:12.5px}
+.crow .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ctrk{position:relative;height:12px}
+.ctrk:before{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;border-left:1px solid var(--line)}
+.cbar{position:absolute;top:0;height:100%;border-radius:3px}
+.crow .val{font-family:var(--f-num);font-size:12px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pend{font-size:13.5px;color:var(--muted);margin:0}
+@media (max-width:560px){.crow{grid-template-columns:1fr 90px}.crow .ctrk{grid-column:1/3}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div class="eyebrow" id="eb"></div>
+<h1>Resultados do Simulado SARESP 2026</h1>
+<p class="sub" id="sub"></p>
+<div class="tabs" id="tabs" role="group" aria-label="Escolher prova"><button data-m="1">Dia 1</button><button data-m="2">Dia 2</button><button data-m="S">Soma dos dois dias</button></div>
+</header>
+<section class="kpis" id="kpis"></section>
+<section class="card"><h2>O que os números dizem</h2><ul class="ins" id="ins"></ul></section>
+<section class="card" id="cmpcard"><h2>Dia 1 × dia 2</h2><p class="note" id="cnote"></p><div class="kpis" id="ckpi"></div><div class="legend"><span><i style="background:var(--accent)"></i>Acertou mais no dia 2</span><span><i style="background:var(--warn)"></i>Acertou menos no dia 2</span></div><div class="cmp" id="cmp"></div></section>
+<section class="grid2">
+<div class="card"><h2>Distribuição de acertos</h2><p class="note" id="hnote"></p><div id="hist"></div></div>
+<div class="card"><h2>Faixas de desempenho</h2><p class="note">Percentual de acertos de cada aluno em relação ao total de questões.</p><div id="stack"></div><div class="legend" id="lg"></div></div>
+</section>
+<div id="detail" style="display:flex;flex-direction:column;gap:20px">
+<section class="card" id="dcard"><h2 id="dtitle"></h2><p class="note" id="dnote"></p><div class="disc" id="disc"></div></section>
+<section class="card" id="qcard"><h2 id="qtitle"></h2><p class="note">Percentual de acerto em cada uma das 40 questões. Em laranja, questões com menos de 25% de acerto.</p><div id="qc"></div></section>
+<section class="card" id="hqcard"><h2 id="hqtitle"></h2><p class="note" id="hqnote"></p><div class="hq" id="hq"></div></section>
+</div>
+<section class="card"><h2>Ranking da turma</h2><p class="note" id="rnote"></p><div class="rank" id="rank"></div></section>
+<section class="grid2">
+<div class="card"><h2>Tempo de prova × acertos</h2><p class="note" id="snote"></p><div id="sc"></div></div>
+<div class="card"><h2>Alunos que pedem atenção</h2><div class="att" id="att"></div></div>
+</section>
+<section class="card"><h2>Tabela completa</h2><button class="tg" id="tg" aria-expanded="false">Mostrar tabela</button><div class="tw" id="tbl" hidden></div></section>
+<section class="foot">
+<p><b>Como os dados foram tratados.</b> Todas as grafias de 7A (7 A, 7 ano A, 7°A, 7º ano A, 7ano A e similares) foram unificadas e as outras salas descartadas (7D: 1 registro no dia 1 e 2 no dia 2, todos sem nota). No dia 1, cinco respostas vieram com a sala convertida em horário (7:00) pela planilha e foram tratadas como 7A.</p>
+<p>Quando o aluno tem mais de um envio finalizado no mesmo dia, vale a maior nota. Nomes com grafia diferente entre os dias foram casados (Ludmila e Ludmilla, Laís Melo a Cunha e Laís Melo da Cunha). Envios sem nota, como o de Xaion Abraão da Silva no dia 2, ficaram de fora.</p>
+<p>A soma dos dois dias (80 questões) considera só os alunos com nota nos dois dias. Gabriela Esperança Alves e Lucas Eduardo Tomiello fizeram só o dia 2 e aparecem apenas nessa visão.</p>
+<p>No dia 2, 15 dos 59 envios finalizados duraram cerca de 60 minutos, sinal de encerramento automático por tempo. Leia o tempo de prova desse dia com cuidado. Os dados por disciplina e por questão vêm do Painel do Professor (dia 1: 34 envios finalizados; dia 2: 59, incluindo as refações) e por isso não são filtrados pela lista de alunos.</p>
+</section>
+</div>
+<div id="tip"></div>
+<script>
+const S=[{"n": "Àgatha Marya", "a1": 16, "m1": 45.7, "t1": 1, "a2": 13, "m2": 34.3, "t2": 2}, {"n": "Alice Sabino", "a1": 16, "m1": 22.2, "t1": 1, "a2": 20, "m2": 53.9, "t2": 1}, {"n": "Alice Santos Sandoval", "a1": 23, "m1": 33.4, "t1": 1, "a2": 17, "m2": 38.4, "t2": 2}, {"n": "Ana Caroliny Lopes de Siqueira", "a1": 13, "m1": 60.0, "t1": 2, "a2": 5, "m2": 66.1, "t2": 1}, {"n": "Ana Laura Freire de Campos", "a1": 13, "m1": 40.2, "t1": 1, "a2": 12, "m2": 24.2, "t2": 3}, {"n": "Carlos Eduardo Oliveira do Prado", "a1": 10, "m1": 5.2, "t1": 2, "a2": 9, "m2": 5.3, "t2": 1}, {"n": "Cauã José Aparecido de Oliveira", "a1": 22, "m1": 43.0, "t1": 1, "a2": 19, "m2": 38.6, "t2": 2}, {"n": "Daniel Messi de Matos", "a1": 15, "m1": 51.9, "t1": 1, "a2": 9, "m2": 59.9, "t2": 1}, {"n": "Emanuel Fillipe de Miranda Barboza", "a1": 20, "m1": 16.8, "t1": 1, "a2": 18, "m2": 60.0, "t2": 1}, {"n": "Gabriel de Souza Faria", "a1": 12, "m1": 39.6, "t1": 1, "a2": 19, "m2": 13.0, "t2": 2}, {"n": "Gabriel Henrique Costa Souza", "a1": 25, "m1": 16.5, "t1": 1, "a2": 9, "m2": 60.0, "t2": 1}, {"n": "Gabriela Esperança Alves", "a1": null, "m1": null, "t1": 0, "a2": 12, "m2": 35.7, "t2": 1}, {"n": "Gustavo Alves dos Santos", "a1": 7, "m1": 24.1, "t1": 1, "a2": 19, "m2": 17.0, "t2": 3}, {"n": "Heitor Henrique Campos de Macedo", "a1": 19, "m1": 75.1, "t1": 1, "a2": 19, "m2": 5.1, "t2": 2}, {"n": "Henrique Cursino de Oliveira Silva", "a1": 12, "m1": 23.4, "t1": 1, "a2": 3, "m2": 45.1, "t2": 1}, {"n": "Isadora Rosa Araujo de Morais", "a1": 11, "m1": 5.5, "t1": 1, "a2": 15, "m2": 52.0, "t2": 2}, {"n": "João Vitor Silva Faria de Toledo", "a1": 26, "m1": 58.9, "t1": 1, "a2": 25, "m2": 23.7, "t2": 3}, {"n": "Kauan Lucas de Macedo Souza", "a1": 9, "m1": 5.0, "t1": 1, "a2": 8, "m2": 37.2, "t2": 2}, {"n": "Kawane Vitoria", "a1": 20, "m1": 50.4, "t1": 1, "a2": 20, "m2": 57.3, "t2": 2}, {"n": "Kevin Henrique", "a1": 25, "m1": 17.0, "t1": 1, "a2": 10, "m2": 6.3, "t2": 1}, {"n": "Laís Melo da Cunha", "a1": 18, "m1": 50.2, "t1": 1, "a2": 22, "m2": 67.4, "t2": 1}, {"n": "Lavinia Vitoria Alves Diniz", "a1": 22, "m1": 65.0, "t1": 1, "a2": 21, "m2": 46.4, "t2": 1}, {"n": "Lucas Eduardo Tomiello", "a1": null, "m1": null, "t1": 0, "a2": 8, "m2": 59.9, "t2": 1}, {"n": "Lucas Gabriel", "a1": 25, "m1": 15.2, "t1": 1, "a2": 10, "m2": 56.2, "t2": 2}, {"n": "Ludmilla de Faria da Silva", "a1": 14, "m1": 34.2, "t1": 1, "a2": 14, "m2": 25.7, "t2": 2}, {"n": "Marcos Vinicius David dos Santos", "a1": 7, "m1": 18.8, "t1": 1, "a2": 16, "m2": 55.6, "t2": 3}, {"n": "Maria Clara de Campos Dias", "a1": 21, "m1": 47.3, "t1": 1, "a2": 18, "m2": 49.0, "t2": 1}, {"n": "Maria Gabriela de Oliveira Santos", "a1": 18, "m1": 30.9, "t1": 1, "a2": 21, "m2": 55.5, "t2": 3}, {"n": "Nicolly Raeli Santos Leandro", "a1": 16, "m1": 59.4, "t1": 1, "a2": 19, "m2": 66.3, "t2": 1}, {"n": "Rebecca Souza Cabral", "a1": 23, "m1": 27.8, "t1": 1, "a2": 19, "m2": 35.2, "t2": 2}, {"n": "Thiago Henrique Camargo da Silva", "a1": 17, "m1": 36.9, "t1": 1, "a2": 16, "m2": 59.1, "t2": 1}, {"n": "Valentin Germano de Melo", "a1": 15, "m1": 23.4, "t1": 2, "a2": 12, "m2": 3.3, "t2": 6}, {"n": "Vitoria Luiza", "a1": 21, "m1": 51.5, "t1": 1, "a2": 24, "m2": 56.1, "t2": 1}];const QD={1:[{"q": 1, "d": "LP", "g": "B", "k": [5, 24, 3, 2]}, {"q": 2, "d": "LP", "g": "C", "k": [7, 5, 19, 3]}, {"q": 3, "d": "LP", "g": "A", "k": [10, 14, 6, 4]}, {"q": 4, "d": "LP", "g": "D", "k": [15, 6, 2, 11]}, {"q": 5, "d": "LP", "g": "C", "k": [7, 12, 10, 5]}, {"q": 6, "d": "LP", "g": "B", "k": [6, 17, 6, 5]}, {"q": 7, "d": "LP", "g": "A", "k": [13, 10, 6, 5]}, {"q": 8, "d": "LP", "g": "D", "k": [7, 3, 8, 15]}, {"q": 9, "d": "LP", "g": "B", "k": [10, 12, 4, 8]}, {"q": 10, "d": "LP", "g": "D", "k": [6, 14, 8, 6]}, {"q": 11, "d": "LP", "g": "B", "k": [6, 23, 1, 4]}, {"q": 12, "d": "LP", "g": "A", "k": [12, 7, 8, 7]}, {"q": 13, "d": "LP", "g": "A", "k": [14, 1, 5, 12]}, {"q": 14, "d": "LP", "g": "C", "k": [10, 5, 11, 8]}, {"q": 15, "d": "LP", "g": "B", "k": [5, 18, 9, 2]}, {"q": 16, "d": "LP", "g": "D", "k": [6, 7, 9, 12]}, {"q": 17, "d": "LP", "g": "B", "k": [2, 22, 3, 7]}, {"q": 18, "d": "LP", "g": "B", "k": [2, 17, 11, 3]}, {"q": 19, "d": "LP", "g": "D", "k": [8, 6, 16, 4]}, {"q": 20, "d": "LP", "g": "A", "k": [6, 9, 8, 11]}, {"q": 21, "d": "EN", "g": "C", "k": [0, 6, 24, 4]}, {"q": 22, "d": "EN", "g": "A", "k": [22, 2, 4, 5]}, {"q": 23, "d": "EN", "g": "D", "k": [6, 1, 3, 24]}, {"q": 24, "d": "EN", "g": "C", "k": [3, 3, 22, 5]}, {"q": 25, "d": "CI", "g": "D", "k": [12, 8, 7, 7]}, {"q": 26, "d": "CI", "g": "B", "k": [9, 15, 6, 4]}, {"q": 27, "d": "CI", "g": "A", "k": [15, 3, 7, 9]}, {"q": 28, "d": "CI", "g": "A", "k": [20, 2, 6, 5]}, {"q": 29, "d": "CI", "g": "A", "k": [20, 3, 5, 6]}, {"q": 30, "d": "CI", "g": "A", "k": [11, 5, 10, 7]}, {"q": 31, "d": "CI", "g": "C", "k": [4, 8, 7, 14]}, {"q": 32, "d": "CI", "g": "D", "k": [9, 3, 13, 8]}, {"q": 33, "d": "CI", "g": "C", "k": [14, 1, 4, 15]}, {"q": 34, "d": "CI", "g": "C", "k": [13, 6, 8, 7]}, {"q": 35, "d": "CI", "g": "D", "k": [13, 3, 2, 16]}, {"q": 36, "d": "CI", "g": "B", "k": [8, 13, 5, 8]}, {"q": 37, "d": "CI", "g": "D", "k": [9, 7, 12, 6]}, {"q": 38, "d": "CI", "g": "C", "k": [6, 5, 22, 1]}, {"q": 39, "d": "CI", "g": "C", "k": [17, 4, 5, 8]}, {"q": 40, "d": "CI", "g": "B", "k": [13, 8, 8, 5]}],2:[{"q": 1, "d": "MA", "g": "C", "k": [16, 14, 18, 2]}, {"q": 2, "d": "MA", "g": "C", "k": [6, 7, 35, 1]}, {"q": 3, "d": "MA", "g": "A", "k": [16, 21, 9, 3]}, {"q": 4, "d": "MA", "g": "B", "k": [6, 34, 5, 4]}, {"q": 5, "d": "MA", "g": "D", "k": [6, 21, 16, 6]}, {"q": 6, "d": "MA", "g": "B", "k": [6, 33, 5, 5]}, {"q": 7, "d": "MA", "g": "C", "k": [21, 1, 15, 11]}, {"q": 8, "d": "MA", "g": "C", "k": [9, 19, 17, 3]}, {"q": 9, "d": "MA", "g": "B", "k": [22, 16, 2, 9]}, {"q": 10, "d": "MA", "g": "B", "k": [11, 16, 16, 6]}, {"q": 11, "d": "MA", "g": "A", "k": [16, 5, 13, 13]}, {"q": 12, "d": "MA", "g": "C", "k": [10, 12, 15, 10]}, {"q": 13, "d": "MA", "g": "C", "k": [9, 18, 13, 7]}, {"q": 14, "d": "MA", "g": "B", "k": [13, 13, 12, 9]}, {"q": 15, "d": "MA", "g": "B", "k": [19, 9, 7, 12]}, {"q": 16, "d": "MA", "g": "B", "k": [9, 15, 9, 14]}, {"q": 17, "d": "MA", "g": "D", "k": [9, 12, 13, 13]}, {"q": 18, "d": "MA", "g": "B", "k": [7, 18, 10, 10]}, {"q": 19, "d": "MA", "g": "D", "k": [5, 5, 14, 22]}, {"q": 20, "d": "MA", "g": "B", "k": [9, 17, 7, 12]}, {"q": 21, "d": "HI", "g": "C", "k": [4, 12, 25, 6]}, {"q": 22, "d": "HI", "g": "D", "k": [12, 8, 12, 15]}, {"q": 23, "d": "HI", "g": "A", "k": [11, 15, 12, 8]}, {"q": 24, "d": "HI", "g": "D", "k": [14, 16, 3, 12]}, {"q": 25, "d": "HI", "g": "B", "k": [8, 14, 13, 9]}, {"q": 26, "d": "HI", "g": "B", "k": [12, 17, 8, 8]}, {"q": 27, "d": "HI", "g": "A", "k": [16, 12, 12, 4]}, {"q": 28, "d": "HI", "g": "C", "k": [2, 7, 17, 14]}, {"q": 29, "d": "HI", "g": "A", "k": [22, 6, 8, 6]}, {"q": 30, "d": "HI", "g": "B", "k": [12, 12, 13, 4]}, {"q": 31, "d": "GE", "g": "D", "k": [10, 8, 10, 13]}, {"q": 32, "d": "GE", "g": "B", "k": [10, 15, 6, 10]}, {"q": 33, "d": "GE", "g": "D", "k": [6, 9, 4, 21]}, {"q": 34, "d": "GE", "g": "D", "k": [16, 6, 5, 13]}, {"q": 35, "d": "GE", "g": "B", "k": [1, 17, 15, 6]}, {"q": 36, "d": "GE", "g": "B", "k": [10, 18, 9, 3]}, {"q": 37, "d": "GE", "g": "C", "k": [5, 8, 15, 12]}, {"q": 38, "d": "GE", "g": "A", "k": [8, 9, 12, 10]}, {"q": 39, "d": "GE", "g": "A", "k": [21, 7, 6, 6]}, {"q": 40, "d": "GE", "g": "A", "k": [18, 10, 8, 4]}]};
+const $=id=>document.getElementById(id);
+const fmt=(x,d=1)=>x.toFixed(d).replace('.',',');
+const sg=x=>(x>0?'+':x<0?'−':'')+Math.abs(x);
+const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
+const median=a=>{const s=[...a].sort((x,y)=>x-y),h=s.length>>1;return s.length%2?s[h]:(s[h-1]+s[h])/2};
+const LBL={'1':'Dia 1','2':'Dia 2','S':'Soma dos dois dias'};
+let MODE='1',D=[],N=40,rt;
+const tip=$('tip');
+function showTip(e,h){tip.innerHTML=h;tip.style.opacity=1;tip.style.left=Math.min(e.clientX+12,innerWidth-250)+'px';tip.style.top=(e.clientY+14)+'px'}
+function hideTip(){tip.style.opacity=0}
+function bindTip(el,h){el.addEventListener('pointermove',e=>showTip(e,h));el.addEventListener('pointerleave',hideTip);el.addEventListener('pointerdown',e=>showTip(e,h))}
+/* por disciplina e questão (Painel do Professor) */
+const L='ABCD',GN={LP:'Língua Portuguesa',EN:'Língua Inglesa',CI:'Ciências',MA:'Matemática',HI:'História',GE:'Geografia'},GS={LP:'Português',EN:'Inglês',CI:'Ciências',MA:'Matemática',HI:'História',GE:'Geografia'},BASE={1:34,2:59};
+const DQ={};
+[1,2].forEach(day=>{const Q=QD[day];Q.forEach(q=>{q.c=q.k[L.indexOf(q.g)];q.p=q.c/BASE[day];q.bl=BASE[day]-q.k.reduce((a,v)=>a+v,0);let b=-1;q.k.forEach((v,i)=>{if(L[i]!==q.g&&(b<0||v>q.k[b]))b=i});q.w=b});
+ const cs=[];Q.forEach(q=>{if(!cs.includes(q.d))cs.push(q.d)});
+ const dg=cs.map(c=>{const s=Q.filter(q=>q.d===c);return{c:c,n:s.length,p:s.reduce((a,q)=>a+q.c,0)/(s.length*BASE[day]),f:s[0].q,l:s[s.length-1].q}});
+ DQ[day]={Q:Q,dg:dg,base:BASE[day]}});
+function dataset(){
+ if(MODE==='1')return S.filter(s=>s.a1!=null).map(s=>({n:s.n,a:s.a1,m:s.m1,t:''+s.t1,a1:s.a1,a2:s.a2}));
+ if(MODE==='2')return S.filter(s=>s.a2!=null).map(s=>({n:s.n,a:s.a2,m:s.m2,t:''+s.t2,a1:s.a1,a2:s.a2}));
+ return S.filter(s=>s.a1!=null&&s.a2!=null).map(s=>({n:s.n,a:s.a1+s.a2,m:s.m1+s.m2,t:s.t1+' / '+s.t2,a1:s.a1,a2:s.a2}));
+}
+function renderStats(){
+ const sorted=[...D].sort((a,b)=>b.a-a.a||a.n.localeCompare(b.n)),n=D.length;
+ const mA=mean(D.map(d=>d.a)),mT=mean(D.map(d=>d.m)),pct=x=>x/N*100;
+ const n50=D.filter(d=>d.a/N>=.5).length,nW=D.filter(d=>d.a/N<=.3).length,n70=D.filter(d=>d.a/N>=.7).length;
+ const fast=MODE==='S'?[]:D.filter(d=>d.m<10);
+ $('eb').textContent='E.E. Professora Rosa Maria de Souza · 7º ano A · '+LBL[MODE]+' · 07/10/2026';
+ $('sub').textContent=n+' alunos'+(MODE==='S'?' com nota nos dois dias':' com nota')+'. Média de '+fmt(mA)+' acertos em '+N+' questões ('+fmt(pct(mA))+'%).';
+ $('kpis').innerHTML=[[n,'alunos avaliados'],[fmt(mA),'média de acertos'],[fmt(pct(mA))+'%','aproveitamento médio'],[fmt(median(D.map(d=>d.a)),median(D.map(d=>d.a))%1?1:0),'mediana de acertos'],[sorted[0].a+' / '+sorted[n-1].a,'maior / menor nota'],[fmt(mT,0)+' min','tempo médio'+(MODE==='S'?' (soma dos dias)':' de prova')]].map(k=>'<div class="kpi"><b>'+k[0]+'</b><span>'+k[1]+'</span></div>').join('');
+ const ins=[];
+ ins.push('A turma acertou em média '+fmt(pct(mA))+'% da prova. A maior nota foi '+sorted[0].a+' acertos de '+N+' ('+fmt(pct(sorted[0].a),0)+'%)'+(n70?', e '+n70+' aluno'+(n70>1?'s':'')+' chegou a 70% ou mais.':', e ninguém chegou a 70%.'));
+ ins.push(n50+' de '+n+' alunos ('+fmt(n50/n*100,0)+'%) acertaram metade da prova ou mais. '+nW+' alunos ('+fmt(nW/n*100,0)+'%) ficaram com 30% ou menos.');
+ if(MODE!=='S'){const x=DQ[MODE],o=[...x.dg].sort((a,b)=>b.p-a.p),hi=o[0],lo=o[o.length-1],qs=[...x.Q].sort((a,b)=>b.p-a.p||a.q-b.q);
+  ins.push('Por disciplina, '+GN[hi.c]+' teve o melhor desempenho ('+fmt(hi.p*100,0)+'%) e '+GN[lo.c]+' o mais baixo ('+fmt(lo.p*100,0)+'%). A questão mais acertada foi a Q'+qs[0].q+' ('+fmt(qs[0].p*100,0)+'%) e a mais difícil a Q'+qs[39].q+' ('+fmt(qs[39].p*100,0)+'%).');
+  if(MODE==='2'){const tb=x.Q.reduce((a,q)=>a+q.bl,0);ins.push(fmt(tb/(40*x.base)*100,0)+'% das respostas do dia 2 ficaram em branco, e as questões finais tiveram mais brancos que as iniciais (Q1: '+x.Q[0].bl+' envios, Q40: '+x.Q[39].bl+'). Pode ter faltado tempo ou a prova foi encerrada antes do fim.')}
+ }
+ if(MODE!=='S'){
+  const lg=D.filter(d=>d.m>=45),sh=D.filter(d=>d.m<45);
+  if(lg.length>=3&&sh.length>=3)ins.push('Tempo e nota têm relação fraca: quem levou 45 minutos ou mais acertou em média '+fmt(mean(lg.map(d=>d.a)))+', contra '+fmt(mean(sh.map(d=>d.a)))+' de quem terminou antes.');
+  if(fast.length)ins.push(fast.length+' aluno'+(fast.length>1?'s':'')+' entregou em menos de 10 minutos, com '+Math.min(...fast.map(d=>d.a))+' a '+Math.max(...fast.map(d=>d.a))+' acertos. Vale conversar com '+(fast.length>1?'eles':'ele')+' para entender se leram as questões.');
+ }
+ if(MODE==='2')ins.push('Vários envios do dia 2 duraram cerca de 60 minutos, sinal de encerramento automático por tempo, então o tempo de prova desse dia não mede bem o ritmo do aluno.');
+ const bo=S.filter(s=>s.a1!=null&&s.a2!=null);const dd=bo.map(s=>s.a2-s.a1);
+ if(MODE==='S')ins.push('Entre os '+bo.length+' alunos com os dois dias, a média passou de '+fmt(mean(bo.map(s=>s.a1))/40*100)+'% no dia 1 para '+fmt(mean(bo.map(s=>s.a2))/40*100)+'% no dia 2. '+dd.filter(x=>x>0).length+' melhoraram e '+dd.filter(x=>x<0).length+' pioraram.');
+ $('ins').innerHTML=ins.map(t=>'<li>'+t+'</li>').join('');
+ /* histograma */
+ const w=N/8,bins=[...Array(8)].map((_,k)=>[k?k*w+1:0,(k+1)*w]);
+ const cnt=bins.map(b=>D.filter(d=>d.a>=b[0]&&d.a<=b[1]).length),mx=Math.max(...cnt,1);
+ $('hnote').textContent='Quantidade de alunos por faixa de acertos (prova de '+N+' questões).';
+ $('hist').innerHTML='<div class="hist" id="hh"></div><div class="hlab">'+bins.map(b=>'<div>'+b[0]+'–'+b[1]+'</div>').join('')+'</div>';
+ cnt.forEach((c,i)=>{const col=document.createElement('div');col.className='hcol';col.innerHTML='<span class="v">'+c+'</span><div class="hbar" style="height:'+(c/mx*80)+'%"></div>';bindTip(col,'<b>'+bins[i][0]+' a '+bins[i][1]+' acertos</b><br>'+c+' aluno'+(c==1?'':'s'));$('hh').appendChild(col)});
+ /* faixas */
+ const bands=[['Até 30%',d=>d.a/N<=.3,'var(--warn)'],['31 a 49%',d=>d.a/N>.3&&d.a/N<.5,'var(--mid)'],['50 a 69%',d=>d.a/N>=.5&&d.a/N<.7,'var(--accent)'],['70% ou mais',d=>d.a/N>=.7,'var(--ink)']];
+ const bc=bands.map(b=>D.filter(b[1]).length);
+ $('stack').innerHTML='<div class="stack">'+bands.map((b,i)=>bc[i]?'<div class="seg" data-k="'+i+'" style="flex:'+bc[i]+';background:'+b[2]+'">'+bc[i]+'</div>':'').join('')+'</div>';
+ $('stack').querySelectorAll('.seg').forEach(s=>{const k=+s.dataset.k;bindTip(s,'<b>'+bands[k][0]+'</b><br>'+bc[k]+' alunos ('+fmt(bc[k]/n*100,0)+'%)')});
+ $('lg').innerHTML=bands.map((b,i)=>'<span><i style="background:'+b[2]+'"></i>'+b[0]+': '+bc[i]+(bc[i]==0?' (ninguém)':'')+'</span>').join('');
+ /* ranking */
+ $('rnote').textContent='Barra completa = '+N+' acertos. A linha tracejada marca a média da turma. Em laranja, alunos com até 30% de acertos.';
+ $('rank').innerHTML=sorted.map(d=>'<div class="rrow"><span class="nm" title="'+d.n+'">'+d.n+'</span><div class="trk"><div class="fill'+(d.a/N<=.3?' w':'')+'" style="width:'+d.a/N*100+'%"></div><div class="ml" style="left:'+mA/N*100+'%"></div></div><span class="val">'+d.a+' · '+fmt(d.a/N*100,0)+'%</span></div>').join('');
+ document.querySelectorAll('.rrow').forEach((r,i)=>{const d=sorted[i];bindTip(r,'<b>'+d.n+'</b><br>'+d.a+' acertos ('+fmt(d.a/N*100)+'%)<br>'+fmt(d.m)+' min'+(MODE==='S'?' no total':' de prova')+(MODE==='S'?'<br>Dia 1: '+d.a1+' · Dia 2: '+d.a2:''))});
+ /* atenção */
+ const low=sorted.filter(d=>d.a/N<=.3);
+ let at='<div><b>Até 30% de acertos ('+low.length+' aluno'+(low.length==1?'':'s')+').</b><br>'+(low.length?low.map(d=>d.n+' ('+d.a+')').join(', ')+'.':'Nenhum aluno nessa faixa.')+'</div>';
+ if(MODE==='S'){const o=S.filter(s=>s.a1==null||s.a2==null);at+='<div><b>Fizeram só um dia ('+o.length+').</b><br>'+o.map(s=>s.n+' (só dia '+(s.a1==null?2:1)+')').join(', ')+'. Ficam fora da soma.</div>'}
+ else at+='<div><b>Entregaram em menos de 10 minutos ('+fast.length+').</b><br>'+(fast.length?fast.map(d=>d.n+' ('+d.a+' acertos, '+fmt(d.m)+' min)').join('; ')+'.':'Nenhum aluno.')+'</div>';
+ $('att').innerHTML=at;
+ /* tabela */
+ $('tbl').innerHTML='<table><thead><tr><th>#</th><th>Aluno</th><th class="n">Dia 1</th><th class="n">Dia 2</th><th class="n">Acertos</th><th class="n">%</th><th class="n">Minutos</th><th class="n">Tentativas</th></tr></thead><tbody>'+sorted.map((d,i)=>'<tr><td>'+(i+1)+'</td><td>'+d.n+'</td><td class="n">'+(d.a1==null?'—':d.a1)+'</td><td class="n">'+(d.a2==null?'—':d.a2)+'</td><td class="n">'+d.a+'</td><td class="n">'+fmt(d.a/N*100)+'</td><td class="n">'+fmt(d.m)+'</td><td class="n">'+d.t+'</td></tr>').join('')+'</tbody></table>';
+ window._mA=mA;
+}
+function scatter(){
+ const el=$('sc'),W=el.clientWidth||460,H=Math.max(260,Math.min(340,W*.7)),m={l:38,r:10,t:26,b:34};
+ const xm=Math.max(80,Math.ceil(Math.max(...D.map(d=>d.m))/20)*20),xs=v=>m.l+v/xm*(W-m.l-m.r),ys=v=>H-m.b-v/N*(H-m.t-m.b);
+ $('snote').textContent='Cada ponto é um aluno.'+(MODE==='S'?' O tempo é a soma dos dois dias.':' Pontos laranja: terminaram em menos de 10 minutos.');
+ let s='<svg viewBox="0 0 '+W+' '+H+'" height="'+H+'" role="img" aria-label="Dispersão de tempo de prova por acertos">';
+ [0,.25,.5,.75,1].forEach(f=>{const v=f*N;s+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+ys(v)+'" y2="'+ys(v)+'" stroke="var(--grid)"/><text x="'+(m.l-6)+'" y="'+(ys(v)+4)+'" text-anchor="end">'+v+'</text>'});
+ [0,.25,.5,.75,1].forEach(f=>{const v=f*xm;s+='<text x="'+xs(v)+'" y="'+(H-m.b+16)+'" text-anchor="middle">'+v+'</text>'});
+ s+='<text x="'+(W/2)+'" y="'+(H-2)+'" text-anchor="middle">minutos de prova</text><text x="4" y="12">acertos</text>';
+ s+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+ys(window._mA)+'" y2="'+ys(window._mA)+'" stroke="var(--ink)" stroke-dasharray="5 4" opacity=".5"/>';
+ D.forEach((d,i)=>{s+='<circle data-i="'+i+'" cx="'+xs(d.m)+'" cy="'+ys(d.a)+'" r="5.5" fill="'+(MODE!=='S'&&d.m<10?'var(--warn)':'var(--accent)')+'" stroke="var(--surface)" stroke-width="2"/>'});
+ el.innerHTML=s+'</svg>';
+ el.querySelectorAll('circle').forEach(c=>{const d=D[c.dataset.i];bindTip(c,'<b>'+d.n+'</b><br>'+d.a+' acertos · '+fmt(d.m)+' min')});
+}
+function qchart(){
+ const el=$('qc');if(!el.clientWidth||MODE==='S')return;
+ const x=DQ[MODE],Q=x.Q,dg=x.dg;
+ const W=el.clientWidth,H=240,m={l:34,r:6,t:30,b:26},bw=(W-m.l-m.r)/40,ys=v=>H-m.b-v*(H-m.t-m.b);
+ let s='<svg viewBox="0 0 '+W+' '+H+'" height="'+H+'" role="img" aria-label="Percentual de acerto por questão">';
+ [0,.25,.5,.75,1].forEach(v=>{s+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+ys(v)+'" y2="'+ys(v)+'" stroke="var(--grid)"/><text x="'+(m.l-6)+'" y="'+(ys(v)+4)+'" text-anchor="end">'+Math.round(v*100)+'%</text>'});
+ dg.forEach(d=>{const x0=m.l+(d.f-1)*bw,x1=m.l+d.l*bw;s+='<text x="'+((x0+x1)/2)+'" y="14" text-anchor="middle">'+GS[d.c]+'</text>';if(d.f>1)s+='<line x1="'+x0+'" x2="'+x0+'" y1="'+(m.t-6)+'" y2="'+(H-m.b)+'" stroke="var(--line)" stroke-dasharray="3 3"/>'});
+ Q.forEach((q,i)=>{const x=m.l+i*bw,h=q.p*(H-m.t-m.b);s+='<rect x="'+(x+1)+'" y="'+ys(q.p)+'" width="'+Math.max(bw-2,2)+'" height="'+h+'" rx="2" fill="'+(q.p<.25?'var(--warn)':'var(--accent)')+'"/><rect data-i="'+i+'" x="'+x+'" y="'+m.t+'" width="'+bw+'" height="'+(H-m.t-m.b)+'" fill="transparent"/>';if(q.q===1||q.q%5===0)s+='<text x="'+(x+bw/2)+'" y="'+(H-m.b+15)+'" text-anchor="middle">'+q.q+'</text>'});
+ el.innerHTML=s+'</svg>';
+ el.querySelectorAll('rect[data-i]').forEach(r=>{const q=Q[r.dataset.i];bindTip(r,'<b>Q'+q.q+' · '+GN[q.d]+'</b><br>Gabarito '+q.g+' · '+fmt(q.p*100,0)+'% de acerto<br>'+L.split('').map((a,j)=>a+' '+q.k[j]).join(' · ')+(q.bl?'<br>Em branco '+q.bl:''))});
+}
+function renderDetail(){
+ const S3=MODE==='S',days=S3?[1,2]:[+MODE];
+ $('qcard').hidden=S3;$('hqcard').hidden=S3;
+ $('dtitle').textContent='Desempenho por disciplina · '+(S3?'dias 1 e 2':LBL[MODE].toLowerCase());
+ $('dnote').textContent=(S3?'Média de acerto de cada disciplina em cada dia, sobre os envios finalizados do Painel do Professor (dia 1: 34, dia 2: 59, incluindo refações).':'Média de acerto de cada disciplina sobre os '+DQ[MODE].base+' envios finalizados (inclui refações). Questão em branco conta como erro.')+(MODE!=='1'?' O painel conta todos os envios, inclusive tentativas repetidas e envios com nota baixa, por isso fica abaixo da média por aluno (maior nota).':'');
+ const rows=days.flatMap(d=>DQ[d].dg.map(g=>({g:g,d:d})));
+ $('disc').innerHTML=rows.map(r=>'<div class="drow"><span>'+GN[r.g.c]+(S3?' <span style="color:var(--muted)">(dia '+r.d+')</span>':'')+'</span><div class="trk"><div class="fill" style="width:'+r.g.p*100+'%"></div></div><span class="val">'+fmt(r.g.p*100,0)+'% · Q'+r.g.f+(r.g.l>r.g.f?'–'+r.g.l:'')+'</span></div>').join('');
+ document.querySelectorAll('.drow').forEach((e,i)=>bindTip(e,'<b>'+GN[rows[i].g.c]+' · dia '+rows[i].d+'</b><br>'+fmt(rows[i].g.p*100)+'% de acerto<br>'+rows[i].g.n+' questões'));
+ if(S3)return;
+ const x=DQ[MODE],nw=x.Q.filter(q=>q.w>=0&&q.k[q.w]>q.c).length;
+ $('qtitle').textContent='Acerto por questão · '+LBL[MODE].toLowerCase();
+ $('hqtitle').textContent='As 10 questões mais difíceis · '+LBL[MODE].toLowerCase();
+ $('hqnote').textContent='Para cada uma, a alternativa errada mais marcada pelos alunos. Em '+nw+' questões uma alternativa errada foi mais marcada que o gabarito.';
+ $('hq').innerHTML=[...x.Q].sort((a,b)=>a.p-b.p||a.q-b.q).slice(0,10).map(q=>'<div class="hqr"><b>Q'+q.q+'</b><span class="d">'+GN[q.d]+'</span><span class="pc">'+fmt(q.p*100,0)+'%</span><span class="x">Gabarito '+q.g+' ('+q.c+'). Mais marcada: '+L[q.w]+' ('+q.k[q.w]+').'+(q.bl?' Em branco: '+q.bl+'.':'')+'</span></div>').join('');
+}
+function renderCmp(){
+ const bo=S.filter(s=>s.a1!=null&&s.a2!=null).map(s=>({n:s.n,a1:s.a1,a2:s.a2,d:s.a2-s.a1})).sort((x,y)=>y.d-x.d||x.n.localeCompare(y.n));
+ const m1=mean(bo.map(s=>s.a1)),m2=mean(bo.map(s=>s.a2)),up=bo.filter(s=>s.d>0).length,dn=bo.filter(s=>s.d<0).length,eq=bo.length-up-dn,mx=Math.max(...bo.map(s=>Math.abs(s.d)));
+ $('cnote').textContent='Alunos que fizeram os dois dias ('+bo.length+'). Diferença de acertos do dia 2 em relação ao dia 1, ambos com 40 questões.';
+ $('ckpi').innerHTML=[[fmt(m1),'média no dia 1'],[fmt(m2),'média no dia 2'],[sg(+(m2-m1).toFixed(1)).replace('.',','),'variação média de acertos'],[up,'acertaram mais'],[dn,'acertaram menos'],[eq,'ficaram iguais']].map(k=>'<div class="kpi"><b>'+k[0]+'</b><span>'+k[1]+'</span></div>').join('');
+ $('cmp').innerHTML=bo.map(s=>{const w=Math.abs(s.d)/mx*50,pos=s.d>0;return '<div class="crow"><span class="nm" title="'+s.n+'">'+s.n+'</span><div class="ctrk">'+(s.d?'<div class="cbar" style="background:'+(pos?'var(--accent)':'var(--warn)')+';width:'+w+'%;left:'+(pos?50:50-w)+'%"></div>':'')+'</div><span class="val">'+s.a1+' → '+s.a2+' ('+sg(s.d)+')</span></div>'}).join('');
+ document.querySelectorAll('.crow').forEach((r,i)=>{const s=bo[i];bindTip(r,'<b>'+s.n+'</b><br>Dia 1: '+s.a1+' acertos · Dia 2: '+s.a2+' acertos<br>Diferença: '+sg(s.d))});
+}
+function render(){
+ D=dataset();N=MODE==='S'?80:40;
+ renderStats();
+  document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===MODE));
+ renderDetail();
+ scatter();
+ qchart();
+}
+function setMode(m){MODE=m;render()}
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+renderCmp();render();
+addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{scatter();qchart()},120)});
+$('tg').onclick=()=>{const t=$('tbl');t.hidden=!t.hidden;$('tg').textContent=t.hidden?'Mostrar tabela':'Ocultar tabela';$('tg').setAttribute('aria-expanded',!t.hidden)};
+</script>
+
+</body>
+</html>
