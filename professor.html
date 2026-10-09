@@ -63,7 +63,7 @@ const SB_KEY = 'sb_publishable_3TPRYBnHfrGy4k5xbD1Xkw_6KfvHt4z';
 const sb = supabase.createClient(SB_URL, SB_KEY);
 const app = document.getElementById('app');
 const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const D = { exams:[], ex:null, qs:[], key:{}, subs:[], schools:[], se:{}, admin:false, sch:null, fs:'', invite:'', tab:'sim' };
+const D = { exams:[], ex:null, qs:[], key:{}, subs:[], schools:[], se:{}, admin:false, canEdit:true, sch:null, fs:'', invite:'', tab:'sim' };
 const lbl = e => e.grade+'º ano · '+e.day+'º dia';
 const exById = id => D.exams.find(e=>e.id===id);
 const fdate = d => d ? new Date(d).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}) : '—';
@@ -148,7 +148,7 @@ async function startInner(){
     document.getElementById('so').onclick = async ()=>{ await sb.auth.signOut(); location.href = location.pathname; };
     return;
   }
-  try{ D.admin = !!(await sb.rpc('is_admin')).data; await loadAll(); render(); }
+  try{ D.admin = !!(await sb.rpc('is_admin')).data; D.canEdit = !!(await sb.rpc('can_edit')).data; await loadAll(); render(); }
   catch(e){ app.innerHTML = `<div class="card"><div class="msg err">Erro ao carregar os dados: ${esc(e.message||e)}</div><p><button class="btn" onclick="location.reload()">Tentar de novo</button></p></div>`; }
 }
 sb.auth.onAuthStateChange((ev)=>{ if(ev==='SIGNED_IN' && !D.exams.length) start(); });
@@ -195,6 +195,7 @@ function render(){
   app.innerHTML = `
     <div class="head"><div><h1>Painel do Professor</h1><div class="muted small">${D.admin?'Administrador · todas as escolas':esc((D.schools[0]||{}).name||'')} · Simulado SARESP 2026</div></div>
       <div><button class="btn sec" id="rf">↻ Atualizar</button> <button class="btn sec" id="so">Sair</button></div></div>
+    ${D.canEdit?'':'<div class="msg info" style="margin-top:0">Acesso somente para consulta: você pode ver resultados e notas, mas não pode alterar nem apagar nada.</div>'}
     <div class="tabs">${tabs.map(([id,l])=>`<button class="tab ${D.tab===id?'on':''}" data-t="${id}">${l}</button>`).join('')}</div>
     ${(D.tab==='gab'||D.tab==='qst')?`<div class="row" style="margin-top:0"><label><b>Prova:</b> <select id="exsel">${D.exams.map(e=>`<option value="${e.id}" ${e.id===D.ex?'selected':''}>${lbl(e)}</option>`).join('')}</select></label></div>`:''}
     <div id="pane"></div>`;
@@ -228,15 +229,15 @@ function paneSim(){
     const se = (D.se[sc.id]||{})[e.id] || { is_open:false, show_score:false };
     const st = countsOf(e.id, sc.id), nk = Object.keys(D.key[e.id]||{}).length;
     return `<tr data-id="${e.id}"><td><b>${lbl(e)}</b></td>
-      <td><label class="sw ${se.is_open?'on':''}"><input type="checkbox" class="io" ${se.is_open?'checked':''}> <span>${se.is_open?'Aberta':'Fechada'}</span></label></td>
-      <td><label class="sw ${se.show_score?'on':''}"><input type="checkbox" class="ss" ${se.show_score?'checked':''}> <span>${se.show_score?'Mostra nota':'Oculta nota'}</span></label></td>
+      <td><label class="sw ${se.is_open?'on':''}"><input type="checkbox" class="io" ${se.is_open?'checked':''} ${D.canEdit?'':'disabled'}> <span>${se.is_open?'Aberta':'Fechada'}</span></label></td>
+      <td><label class="sw ${se.show_score?'on':''}"><input type="checkbox" class="ss" ${se.show_score?'checked':''} ${D.canEdit?'':'disabled'}> <span>${se.show_score?'Mostra nota':'Oculta nota'}</span></label></td>
       <td>${D.admin?`<input type="number" class="du" min="30" max="600" value="${e.duration_minutes}" style="width:84px">`:e.duration_minutes+' min'}</td>
       <td class="n">${nk}/${e.total}</td><td class="n">${st.n}</td><td class="n">${st.f}</td>
-      <td><button class="btn xs sv">Salvar</button></td></tr>`;
+      <td>${D.canEdit?'<button class="btn xs sv">Salvar</button>':''}</td></tr>`;
   }).join('');
   pane().innerHTML = `<div class="card"><h2>Aplicação das provas</h2>
     ${D.admin?`<div class="row" style="margin-top:0">${schoolSel('ssel', sc.id)}</div>`:`<p><b>${esc(sc.name)}</b></p>`}
-    <p class="muted small">O aluno só consegue começar uma prova que esteja <b>aberta para a sua escola</b>. Marque, ajuste e clique em <b>Salvar</b> na linha da prova.${D.admin?'':' A duração e o gabarito são definidos pelo administrador.'}</p>
+    <p class="muted small">O aluno só consegue começar uma prova que esteja <b>aberta para a sua escola</b>. Marque, ajuste e clique em <b>Salvar</b> na linha da prova.${D.admin?'':' A duração e o gabarito são definidos pelo administrador.'}${D.canEdit?'':' Neste acesso você só consulta.'}</p>
     <div class="tw"><table><tr><th>Prova</th><th>Situação</th><th>Nota ao aluno</th><th>Duração</th><th class="n">Gabarito</th><th class="n">Iniciaram</th><th class="n">Finalizaram</th><th></th></tr>${rows}</table></div>
     <div id="fm"></div></div>
     <div class="card"><h2>Links para os alunos · ${esc(sc.name)}</h2>
@@ -347,7 +348,7 @@ function paneRes(){
         <td class="n">${s.score==null||!s.total?'—':Math.round(s.score/s.total*100)+'%'}</td>
         <td>${fdate(s.started_at)}</td>
         <td>${s.finished_at?'✓ finalizou':'<span style="color:var(--warn)">em andamento</span>'}</td>
-        <td><button class="btn xs red del" data-id="${s.id}" data-n="${esc(s.student_name)}">Excluir</button></td></tr>`).join('') || '<tr><td colspan="9" class="muted">Nenhum aluno ainda.</td></tr>'}</table>`;
+        <td>${D.canEdit?`<button class="btn xs red del" data-id="${s.id}" data-n="${esc(s.student_name)}">Excluir</button>`:''}</td></tr>`).join('') || '<tr><td colspan="9" class="muted">Nenhum aluno ainda.</td></tr>'}</table>`;
     document.querySelectorAll('.del').forEach(b=> b.onclick = async ()=>{
       if(!confirm(`Excluir a tentativa de “${b.dataset.n}”? As respostas dela serão apagadas e isso não pode ser desfeito.`)) return;
       const { error } = await sb.from('submissions').delete().eq('id', b.dataset.id);
@@ -412,7 +413,7 @@ function paneEsc(){
     return `<tr data-id="${sc.id}"><td><b>${esc(sc.name)}</b></td><td>${esc(sc.login||'—')}</td>
       <td class="n" style="${over?'color:var(--bad);font-weight:800':''}">${n} / ${sc.max_students}${over?' ⚠':''}</td><td class="n">${t}</td>
       <td>${sc.active?'<span style="color:var(--ok)">ativa</span>':'<span class="muted">desativada</span>'}</td>
-      <td><button class="btn xs sec tg">${sc.active?'Desativar':'Ativar'}</button> <button class="btn xs sec pw">Nova senha</button> <button class="btn xs sec lk2">Link</button></td></tr>`;
+      <td><button class="btn xs sec tg">${sc.active?'Desativar':'Ativar'}</button> <button class="btn xs sec pw">Nova senha</button> <button class="btn xs sec vw">Login consulta</button> <button class="btn xs sec lk2">Link</button></td></tr>`;
   }).join('');
   pane().innerHTML = `<div class="card"><h2>Escolas cadastradas (${D.schools.length})</h2>
     <p class="muted small">“Alunos” conta nomes diferentes que já fizeram alguma prova. O plano gratuito foi dimensionado para escolas de até 300 alunos; acima disso aparece o aviso ⚠.</p>
@@ -443,6 +444,13 @@ function paneEsc(){
     try{ await callFn({ action:'reset_password', school_id:id, password:p }); flash('Senha alterada. Informe a nova senha à escola.'); }
     catch(e){ flash('Erro: '+esc(e.message),'err'); }
   });
+  document.querySelectorAll('.vw').forEach(b=> b.onclick = async ()=>{
+    const id = b.closest('tr').dataset.id, sc = schoolOf(id);
+    const l = prompt(`Login de consulta (só ver notas) para ${sc.name}.\nUse letras minúsculas, números, ponto ou hífen:`); if(!l) return;
+    const p = prompt('Senha do login de consulta (mínimo 8 caracteres):'); if(!p) return;
+    try{ await callFn({ action:'create_viewer', school_id:id, login:l.trim().toLowerCase(), password:p }); flash('Login de consulta criado: '+esc(l)+'. Ele só vê resultados.'); }
+    catch(e){ flash('Erro: '+esc(e.message),'err'); }
+  });
   document.querySelectorAll('.lk2').forEach(b=> b.onclick = async ()=>{
     const sc = schoolOf(b.closest('tr').dataset.id), u = baseUrl()+'?escola='+sc.slug;
     try{ await navigator.clipboard.writeText(u); flash('Link dos alunos copiado: '+esc(u)); }catch(_){ prompt('Link dos alunos:', u); }
@@ -456,10 +464,19 @@ function paneMinha(){
     <div class="kpis"><div class="kpi"><b>${n} / ${sc.max_students}</b>alunos que já fizeram prova</div><div class="kpi"><b>${D.subs.length}</b>tentativas</div></div>
     <p class="muted small">Login da escola: <b>${esc(sc.login||'—')}</b></p>
     <div class="lk"><b>Link alunos</b><input readonly value="${esc(u)}" onclick="this.select()"><button class="btn xs sec cp">Copiar</button></div></div>
+    ${D.canEdit?`<div class="card"><h2>Login de consulta (só ver notas)</h2>
+      <p class="muted small">Crie um login para os professores que só precisam ver os resultados. Quem entra por ele não consegue apagar alunos, abrir ou fechar provas nem trocar senhas.</p>
+      <div class="row"><input id="vl" placeholder="login (ex.: escolafulano.consulta)" autocapitalize="none" style="min-width:240px"><input type="password" id="vp" placeholder="senha (mín. 8)" style="min-width:200px"><button class="btn" id="vb">Criar login de consulta</button></div><div id="fm3"></div></div>
     <div class="card"><h2>Trocar a senha da escola</h2>
       <p class="muted small">Todos os professores que usam o login da escola passarão a usar a nova senha.</p>
-      <div class="row"><input type="password" id="np" placeholder="nova senha (mín. 8 caracteres)" style="min-width:260px"><button class="btn" id="sp">Trocar senha</button></div><div id="fm"></div></div>`;
+      <div class="row"><input type="password" id="np" placeholder="nova senha (mín. 8 caracteres)" style="min-width:260px"><button class="btn" id="sp">Trocar senha</button></div><div id="fm"></div></div>`:''}`;
   document.querySelectorAll('.cp').forEach(b=> b.onclick = copyBtn(b));
+  if(!D.canEdit) return;
+  document.getElementById('vb').onclick = async ()=>{
+    const m = document.getElementById('fm3'), l = document.getElementById('vl').value.trim().toLowerCase(), p = document.getElementById('vp').value;
+    try{ await callFn({ action:'create_viewer', school_id:sc.id, login:l, password:p }); m.innerHTML = `<div class="msg ok">Login de consulta criado: <b>${esc(l)}</b>. Passe o login e a senha aos professores.</div>`; document.getElementById('vp').value=''; }
+    catch(e){ m.innerHTML = `<div class="msg err">${esc(e.message)}</div>`; }
+  };
   document.getElementById('sp').onclick = async ()=>{
     const p = document.getElementById('np').value;
     if(p.length < 8){ flash('A senha precisa ter pelo menos 8 caracteres.','err'); return; }
