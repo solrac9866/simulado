@@ -264,7 +264,7 @@ function screenLogin(){
     <input id="nome" autocomplete="name" placeholder="Digite seu nome e sobrenome">
     <label for="turma">Turma</label>
     <select id="turma"><option value="">Selecione a sua turma</option>${TURMAS.map(L=>`<option value="${ex.grade}${L}">${ex.grade}º ${L}</option>`).join('')}</select>
-    <div class="info">Suas respostas são salvas automaticamente a cada alternativa marcada. Você pode voltar em qualquer questão antes de finalizar.</div>
+    <div class="info">Suas respostas são salvas automaticamente a cada alternativa marcada. Se sair da prova, entre de novo com o mesmo nome e a mesma turma para continuar de onde parou.</div>
     <div id="msg"></div>
     <button class="btn block" id="go">Começar o simulado</button>
     <button class="btn sec block" id="bk">← Trocar de prova</button>
@@ -278,6 +278,14 @@ function screenLogin(){
     if(nome.split(' ').length<2 || nome.length<5){ msg.innerHTML='<div class="err">Digite seu nome completo (nome e sobrenome).</div>'; return; }
     if(!turma){ msg.innerHTML='<div class="err">Informe sua turma.</div>'; return; }
     go.disabled=true; go.textContent='Iniciando…';
+    try{
+      const rs = await sb.rpc('resume_submission', { p_exam:ex.id, p_name:nome, p_class:turma, p_school:S.school.id });
+      if(!rs.error && rs.data && rs.data.id){
+        S.sub = { id:rs.data.id, name:nome, cls:turma, start:rs.data.started_at, exam_id:ex.id };
+        S.ans = rs.data.answers || {}; S.cur = 0; S.pending = new Set(); save();
+        screenExam(); return;
+      }
+    }catch(e){}
     const { data, error } = await sb.rpc('start_submission', { p_exam:ex.id, p_name:nome, p_class:turma, p_school:S.school.id });
     if(error){
       go.disabled=false; go.textContent='Começar o simulado';
