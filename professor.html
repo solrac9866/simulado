@@ -214,6 +214,10 @@ async function callFn(body){
   const r = await fetch(SB_URL+'/functions/v1/school-admin', { method:'POST', headers:{ 'Content-Type':'application/json', apikey:SB_KEY, Authorization:'Bearer '+session.access_token }, body:JSON.stringify(body) });
   const j = await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||'Erro'); return j;
 }
+const newToken = ()=>{ const a = new Uint8Array(24); crypto.getRandomValues(a); return [...a].map(x=>x.toString(16).padStart(2,'0')).join(''); };
+const viewUrl = t => baseUrl()+'consulta.html?chave='+t;
+async function getViewToken(sid){ const { data } = await sb.from('school_view_tokens').select('token').eq('school_id', sid).maybeSingle(); return (data && data.token) || ''; }
+async function setViewToken(sid, token){ const { error } = await sb.from('school_view_tokens').upsert({ school_id:sid, token }, { onConflict:'school_id' }); if(error) throw error; }
 const copyBtn = b => async ()=>{
   const i = b.parentElement.querySelector('input');
   try{ await navigator.clipboard.writeText(i.value); b.textContent='Copiado ✓'; }catch(_){ i.select(); b.textContent='Selecionado'; }
@@ -413,7 +417,7 @@ function paneEsc(){
     return `<tr data-id="${sc.id}"><td><b>${esc(sc.name)}</b></td><td>${esc(sc.login||'—')}</td>
       <td class="n" style="${over?'color:var(--bad);font-weight:800':''}">${n} / ${sc.max_students}${over?' ⚠':''}</td><td class="n">${t}</td>
       <td>${sc.active?'<span style="color:var(--ok)">ativa</span>':'<span class="muted">desativada</span>'}</td>
-      <td><button class="btn xs sec tg">${sc.active?'Desativar':'Ativar'}</button> <button class="btn xs sec pw">Nova senha</button> <button class="btn xs sec vw">Login consulta</button> <button class="btn xs sec lk2">Link</button></td></tr>`;
+      <td><button class="btn xs sec tg">${sc.active?'Desativar':'Ativar'}</button> <button class="btn xs sec pw">Nova senha</button> <button class="btn xs sec vw">Login consulta</button> <button class="btn xs sec vk">Link consulta</button> <button class="btn xs sec lk2">Link</button></td></tr>`;
   }).join('');
   pane().innerHTML = `<div class="card"><h2>Escolas cadastradas (${D.schools.length})</h2>
     <p class="muted small">“Alunos” conta nomes diferentes que já fizeram alguma prova. O plano gratuito foi dimensionado para escolas de até 300 alunos; acima disso aparece o aviso ⚠.</p>
@@ -444,6 +448,15 @@ function paneEsc(){
     try{ await callFn({ action:'reset_password', school_id:id, password:p }); flash('Senha alterada. Informe a nova senha à escola.'); }
     catch(e){ flash('Erro: '+esc(e.message),'err'); }
   });
+  document.querySelectorAll('.vk').forEach(b=> b.onclick = async ()=>{
+    const id = b.closest('tr').dataset.id;
+    try{
+      let t = await getViewToken(id);
+      if(!t){ t = newToken(); await setViewToken(id, t); }
+      const u = viewUrl(t);
+      try{ await navigator.clipboard.writeText(u); flash('Link de consulta copiado: '+esc(u)); }catch(_){ prompt('Link de consulta:', u); }
+    }catch(e){ flash('Erro: '+esc(e.message),'err'); }
+  });
   document.querySelectorAll('.vw').forEach(b=> b.onclick = async ()=>{
     const id = b.closest('tr').dataset.id, sc = schoolOf(id);
     const l = prompt(`Login de consulta (só ver notas) para ${sc.name}.\nUse letras minúsculas, números, ponto ou hífen:`); if(!l) return;
@@ -464,7 +477,11 @@ function paneMinha(){
     <div class="kpis"><div class="kpi"><b>${n} / ${sc.max_students}</b>alunos que já fizeram prova</div><div class="kpi"><b>${D.subs.length}</b>tentativas</div></div>
     <p class="muted small">Login da escola: <b>${esc(sc.login||'—')}</b></p>
     <div class="lk"><b>Link alunos</b><input readonly value="${esc(u)}" onclick="this.select()"><button class="btn xs sec cp">Copiar</button></div></div>
-    ${D.canEdit?`<div class="card"><h2>Login de consulta (só ver notas)</h2>
+    ${D.canEdit?`<div class="card"><h2>Link de consulta para os professores</h2>
+      <p class="muted small">Quem tiver este link vê os resultados da escola sem precisar de login. Os nomes aparecem abreviados (ex.: Maria S.) e não há botão de alterar nada. Se o link for repassado a quem não deveria, gere um novo: o antigo para de funcionar.</p>
+      <div class="lk"><b>Link</b><input readonly id="vu" placeholder="ainda não gerado" onclick="this.select()"><button class="btn xs sec" id="vc">Copiar</button></div>
+      <div class="row"><button class="btn" id="vg">Gerar link novo</button><button class="btn sec" id="vd">Desativar link</button></div><div id="fm4"></div></div>
+    <div class="card"><h2>Login de consulta (só ver notas)</h2>
       <p class="muted small">Crie um login para os professores que só precisam ver os resultados. Quem entra por ele não consegue apagar alunos, abrir ou fechar provas nem trocar senhas.</p>
       <div class="row"><input id="vl" placeholder="login (ex.: escolafulano.consulta)" autocapitalize="none" style="min-width:240px"><input type="password" id="vp" placeholder="senha (mín. 8)" style="min-width:200px"><button class="btn" id="vb">Criar login de consulta</button></div><div id="fm3"></div></div>
     <div class="card"><h2>Trocar a senha da escola</h2>
@@ -472,6 +489,17 @@ function paneMinha(){
       <div class="row"><input type="password" id="np" placeholder="nova senha (mín. 8 caracteres)" style="min-width:260px"><button class="btn" id="sp">Trocar senha</button></div><div id="fm"></div></div>`:''}`;
   document.querySelectorAll('.cp').forEach(b=> b.onclick = copyBtn(b));
   if(!D.canEdit) return;
+  const vu = document.getElementById('vu'), m4 = document.getElementById('fm4');
+  getViewToken(sc.id).then(t=>{ if(t) vu.value = viewUrl(t); });
+  document.getElementById('vc').onclick = async ()=>{ if(!vu.value) return; try{ await navigator.clipboard.writeText(vu.value); }catch(_){ vu.select(); } m4.innerHTML = '<div class="msg ok">Link copiado.</div>'; };
+  document.getElementById('vg').onclick = async ()=>{
+    if(vu.value && !confirm('Gerar um link novo? O link atual deixa de funcionar.')) return;
+    try{ const t = newToken(); await setViewToken(sc.id, t); vu.value = viewUrl(t); m4.innerHTML = '<div class="msg ok">Link novo gerado. Envie aos professores.</div>'; }catch(e){ m4.innerHTML = `<div class="msg err">${esc(e.message)}</div>`; }
+  };
+  document.getElementById('vd').onclick = async ()=>{
+    if(!confirm('Desativar o link de consulta? Quem tem o link deixará de ver os resultados.')) return;
+    try{ await setViewToken(sc.id, null); vu.value = ''; m4.innerHTML = '<div class="msg ok">Link desativado.</div>'; }catch(e){ m4.innerHTML = `<div class="msg err">${esc(e.message)}</div>`; }
+  };
   document.getElementById('vb').onclick = async ()=>{
     const m = document.getElementById('fm3'), l = document.getElementById('vl').value.trim().toLowerCase(), p = document.getElementById('vp').value;
     try{ await callFn({ action:'create_viewer', school_id:sc.id, login:l, password:p }); m.innerHTML = `<div class="msg ok">Login de consulta criado: <b>${esc(l)}</b>. Passe o login e a senha aos professores.</div>`; document.getElementById('vp').value=''; }

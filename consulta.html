@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Consulta de resultados · Simulado SARESP 2026</title>
+<script src="supabase.min.js"></script>
+<style>
+:root{--azul:#0b5cab;--azul-esc:#08417a;--azul-cl:#e8f1fb;--txt:#1b2733;--mut:#5d6b7a;--bor:#d5dde6;--ok:#1f8a4c;--bad:#c0392b;--warn:#b26a00;--bg:#f3f6fa}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--txt);background:var(--bg);line-height:1.45}
+.wrap{max-width:1000px;margin:0 auto;padding:16px}
+.card{background:#fff;border:1px solid var(--bor);border-radius:14px;padding:18px;margin-bottom:14px}
+h1{font-size:1.25rem;margin:0;color:var(--azul-esc)} h2{font-size:1.05rem;margin:0 0 10px}
+.muted{color:var(--mut)} .small{font-size:.85rem}
+select{font:inherit;padding:10px 12px;border:1.5px solid var(--bor);border-radius:10px;background:#fff;max-width:100%}
+.row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.tabs{display:flex;gap:6px;margin:12px 0}
+.tab{font:inherit;cursor:pointer;background:#fff;border:1.5px solid var(--bor);border-radius:999px;padding:8px 16px;font-weight:700;color:var(--mut)}
+.tab.on{background:var(--azul);border-color:var(--azul);color:#fff}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{border-bottom:1px solid var(--bor);padding:8px 10px;text-align:left;white-space:nowrap}
+th{background:var(--azul-cl)} td.n,th.n{text-align:right}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.kpi{background:var(--azul-cl);border-radius:12px;padding:12px}
+.kpi b{display:block;font-size:1.5rem;color:var(--azul-esc)}
+.bar{height:10px;background:#e6ebf1;border-radius:6px;min-width:120px;overflow:hidden}
+.bar i{display:block;height:100%}
+.msg{border-radius:10px;padding:10px 12px;background:var(--azul-cl);color:var(--azul-esc);margin-bottom:12px}
+.err{background:#fdecea;color:#8a1c14}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="card">Carregando…</div></div>
+<script>
+const SB_URL = 'https://pkhxjvynplncvdpxutjn.supabase.co';
+const SB_KEY = 'sb_publishable_3TPRYBnHfrGy4k5xbD1Xkw_6KfvHt4z';
+const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession:false, autoRefreshToken:false } });
+const app = document.getElementById('app');
+const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const TOKEN = new URLSearchParams(location.search).get('chave') || '';
+const lbl = e => e.grade+'º ano · '+e.day+'º dia';
+const D = { school:'', exams:[], rows:[], tab:'res', ex:'' };
+const exById = id => D.exams.find(e=>e.id===id);
+const fdate = d => d ? new Date(d).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}) : '—';
+
+async function load(){
+  const { data, error } = await sb.rpc('view_results', { p_token: TOKEN });
+  if(error || !data){
+    app.innerHTML = `<div class="card"><h1>Link inválido ou desativado</h1><p class="muted">Peça à coordenação da escola um link novo de consulta.</p></div>`; return;
+  }
+  D.school = data.school; D.exams = data.exams; D.rows = data.rows; D.ex = (D.exams[0]||{}).id || '';
+  render();
+}
+function render(){
+  app.innerHTML = `<div class="card"><h1>Resultados do simulado</h1><div class="muted small">${esc(D.school)} · Simulado SARESP 2026 · somente consulta</div>
+    <div class="tabs"><button class="tab ${D.tab==='res'?'on':''}" data-t="res">Resultados</button><button class="tab ${D.tab==='qst'?'on':''}" data-t="qst">Por questão</button>
+    <button class="tab" id="rf">↻ Atualizar</button></div><div id="pane"></div></div>`;
+  document.querySelectorAll('.tab[data-t]').forEach(b=> b.onclick = ()=>{ D.tab=b.dataset.t; render(); });
+  document.getElementById('rf').onclick = load;
+  (D.tab==='res'?paneRes:paneQst)();
+}
+function paneRes(){
+  const pane = document.getElementById('pane');
+  pane.innerHTML = `<div class="row">
+    <label>Prova: <select id="fe"><option value="">Todas as provas</option>${D.exams.map(e=>`<option value="${e.id}">${lbl(e)}</option>`).join('')}</select></label>
+    <label>Turma: <select id="ft"></select></label></div>
+    <div id="kp"></div><h2 style="margin-top:14px">Resumo por turma</h2><div class="tw" id="rt"></div>
+    <h2 style="margin-top:14px">Alunos</h2><div class="tw" id="tb"></div>`;
+  const fe = document.getElementById('fe'), ft = document.getElementById('ft');
+  const base = ()=> D.rows.filter(r=>!fe.value || r.exam_id===fe.value);
+  const fill = ()=>{ const c = ft.value, t = [...new Set(base().map(r=>r.class))].sort(); ft.innerHTML = '<option value="">Todas</option>'+t.map(x=>`<option ${x===c?'selected':''}>${esc(x)}</option>`).join(''); };
+  const now = ()=> base().filter(r=>!ft.value || r.class===ft.value);
+  const draw = ()=>{
+    const rows = now(), done = rows.filter(r=>r.finished && r.score!=null);
+    const avg = done.length ? done.reduce((a,r)=>a+r.score,0)/done.length : null;
+    document.getElementById('kp').innerHTML = `<div class="kpis">
+      <div class="kpi"><b>${rows.length}</b>iniciaram</div><div class="kpi"><b>${rows.filter(r=>r.finished).length}</b>finalizaram</div>
+      <div class="kpi"><b>${avg==null?'—':avg.toFixed(1)}</b>média de acertos</div><div class="kpi"><b>${done.length?Math.max(...done.map(r=>r.score)):'—'}</b>maior nota</div></div>`;
+    const by = {};
+    rows.forEach(r=>{ const k = r.exam_id+'|'+r.class; const o = by[k] ||= { ex:r.exam_id, t:r.class, n:0, f:0, sum:0, tot:0 }; o.n++; if(r.finished){ o.f++; if(r.score!=null){ o.sum+=r.score; o.tot++; } } });
+    document.getElementById('rt').innerHTML = `<table><tr><th>Prova</th><th>Turma</th><th class="n">Iniciaram</th><th class="n">Finalizaram</th><th class="n">Média de acertos</th><th class="n">% médio</th></tr>
+      ${Object.values(by).sort((a,b)=>D.exams.findIndex(e=>e.id===a.ex)-D.exams.findIndex(e=>e.id===b.ex)||a.t.localeCompare(b.t)).map(o=>{ const e=exById(o.ex), m=o.tot?o.sum/o.tot:null;
+        return `<tr><td>${esc(lbl(e))}</td><td>${esc(o.t)}</td><td class="n">${o.n}</td><td class="n">${o.f}</td><td class="n">${m==null?'—':m.toFixed(1)+'/'+e.total}</td><td class="n">${m==null?'—':Math.round(m/e.total*100)+'%'}</td></tr>`; }).join('') || '<tr><td colspan="6" class="muted">Nenhum aluno ainda.</td></tr>'}</table>`;
+    document.getElementById('tb').innerHTML = `<table><tr><th>Aluno</th><th>Turma</th><th>Prova</th><th class="n">Acertos</th><th class="n">%</th><th>Início</th><th>Situação</th></tr>
+      ${rows.map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.class)}</td><td>${esc(lbl(exById(r.exam_id)))}</td><td class="n">${r.score==null?'—':r.score+'/'+r.total}</td>
+        <td class="n">${r.score==null||!r.total?'—':Math.round(r.score/r.total*100)+'%'}</td><td>${fdate(r.started)}</td><td>${r.finished?'✓ finalizou':'<span style="color:var(--warn)">em andamento</span>'}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">Nenhum aluno ainda.</td></tr>'}</table>`;
+  };
+  fe.onchange = ()=>{ ft.value=''; fill(); draw(); }; ft.onchange = draw; fill(); draw();
+}
+async function paneQst(){
+  const pane = document.getElementById('pane');
+  pane.innerHTML = `<div class="row"><label>Prova: <select id="fe">${D.exams.map(e=>`<option value="${e.id}" ${e.id===D.ex?'selected':''}>${lbl(e)}</option>`).join('')}</select></label>
+    <label>Turma: <select id="ft"></select></label></div><div id="bl"></div><div class="tw" id="tb">Carregando…</div>`;
+  const fe = document.getElementById('fe'), ft = document.getElementById('ft');
+  const fill = ()=>{ const t = [...new Set(D.rows.filter(r=>r.exam_id===fe.value).map(r=>r.class))].sort(); ft.innerHTML = '<option value="">Todas</option>'+t.map(x=>`<option>${esc(x)}</option>`).join(''); };
+  const draw = async ()=>{
+    D.ex = fe.value;
+    const { data, error } = await sb.rpc('view_question_stats', { p_token:TOKEN, p_exam:fe.value, p_class:ft.value||null });
+    if(error){ document.getElementById('tb').innerHTML = '<div class="msg err">Não foi possível carregar.</div>'; return; }
+    const total = data.length ? data[0].o_students : 0;
+    const subj = {}; data.forEach(r=>{ (subj[r.o_subject] ||= []).push(r.o_pct); });
+    document.getElementById('bl').innerHTML = `<div class="kpis">${Object.entries(subj).map(([n,a])=>`<div class="kpi"><b>${total?Math.round(a.reduce((x,y)=>x+y,0)/a.length)+'%':'—'}</b>${esc(n)}</div>`).join('')}</div>
+      <p class="muted small">Base: ${total} aluno(s) que finalizaram. Questão em branco conta como erro.</p>`;
+    const color = p => p>=70?'var(--ok)':p>=40?'#e6a100':'var(--bad)';
+    document.getElementById('tb').innerHTML = `<table><tr><th>Questão</th><th>Disciplina</th><th class="n">% de acerto</th><th></th></tr>
+      ${data.map(r=>`<tr><td><b>${r.o_q}</b></td><td>${esc(r.o_subject)}</td><td class="n">${r.o_pct}%</td><td><div class="bar"><i style="width:${r.o_pct}%;background:${color(r.o_pct)}"></i></div></td></tr>`).join('')}</table>`;
+  };
+  fe.onchange = ()=>{ fill(); draw(); }; ft.onchange = draw; fill(); draw();
+}
+load();
+</script>
+</body>
+</html>
