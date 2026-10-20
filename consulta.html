@@ -140,10 +140,14 @@ async function paneQst(){
     const total = data.length ? data[0].o_students : 0;
     const subj = {}; data.forEach(r=>{ (subj[r.o_subject] ||= []).push(r.o_pct); });
     document.getElementById('bl').innerHTML = `<div class="kpis">${Object.entries(subj).map(([n,a])=>`<div class="kpi"><b>${total?Math.round(a.reduce((x,y)=>x+y,0)/a.length)+'%':'—'}</b>${esc(n)}</div>`).join('')}</div>
-      <p class="muted small">Base: ${total} aluno(s) que finalizaram. Questão em branco conta como erro. <b>Toque em uma questão para ver o enunciado completo.</b></p>`;
+      <p class="muted small">Base: ${total} aluno(s) que finalizaram. Questão em branco conta como erro. Nas colunas A a D, quantos alunos marcaram cada alternativa: <b style="color:var(--ok)">verde</b> é o gabarito e <b style="color:var(--bad)">vermelho</b> é a errada que teve mais votos que a certa. <b>Toque em uma questão para ver o enunciado completo.</b></p>`;
     const color = p => p>=70?'var(--ok)':p>=40?'#e6a100':'var(--bad)';
-    document.getElementById('tb').innerHTML = `<table><tr><th>Questão</th><th>Disciplina</th><th>Gabarito</th><th class="n">% de acerto</th><th></th><th></th></tr>
-      ${data.map(r=>`<tr class="qrow" data-q="${r.o_q}" title="Ver a questão ${r.o_q}"><td><b>${r.o_q}</b></td><td>${esc(r.o_subject)}</td><td><b style="color:var(--ok)">${(det[r.o_q]||{}).o_correct||'—'}</b></td><td class="n">${r.o_pct}%</td><td><div class="bar"><i style="width:${r.o_pct}%;background:${color(r.o_pct)}"></i></div></td><td><button class="btn xs sec">Ver</button></td></tr>`).join('')}</table>`;
+    const altCells = q => { const d = det[q]||{}, c = { A:d.o_a||0, B:d.o_b||0, C:d.o_c||0, D:d.o_d||0 }, g = d.o_correct;
+      const mx = Math.max(...['A','B','C','D'].filter(L=>L!==g).map(L=>c[L]));
+      const br = Math.max(0, total - c.A - c.B - c.C - c.D);
+      return ['A','B','C','D'].map(L=>`<td class="n" style="${L===g?'font-weight:800;color:var(--ok)':(c[L]&&c[L]===mx&&c[L]>(c[g]||0)?'font-weight:800;color:var(--bad)':'')}">${c[L]}</td>`).join('')+`<td class="n muted">${br}</td>`; };
+    document.getElementById('tb').innerHTML = `<table><tr><th>Questão</th><th>Disciplina</th><th>Gabarito</th><th class="n">% de acerto</th><th></th><th class="n">A</th><th class="n">B</th><th class="n">C</th><th class="n">D</th><th class="n">Branco</th><th></th></tr>
+      ${data.map(r=>`<tr class="qrow" data-q="${r.o_q}" title="Ver a questão ${r.o_q}"><td><b>${r.o_q}</b></td><td>${esc(r.o_subject)}</td><td><b style="color:var(--ok)">${(det[r.o_q]||{}).o_correct||'—'}</b></td><td class="n">${r.o_pct}%</td><td><div class="bar"><i style="width:${r.o_pct}%;background:${color(r.o_pct)}"></i></div></td>${altCells(r.o_q)}<td><button class="btn xs sec">Ver</button></td></tr>`).join('')}</table>`;
     const by = {}; data.forEach(r=>{ const d = det[r.o_q]||{}; by[r.o_q] = { o_a:d.o_a||0, o_b:d.o_b||0, o_c:d.o_c||0, o_d:d.o_d||0, o_hits:Math.round(r.o_pct*total/100) }; });
     QV.stats = { by, total, cls:cls||'' };
     const e = exById(exId);
