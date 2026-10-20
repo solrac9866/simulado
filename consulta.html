@@ -71,7 +71,7 @@ const app = document.getElementById('app');
 const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const TOKEN = new URLSearchParams(location.search).get('chave') || '';
 const lbl = e => e.grade+'º ano · '+e.day+'º dia';
-const D = { school:'', exams:[], rows:[], tab:'res', ex:'' };
+const D = { school:'', exams:[], rows:[], tab:'res', ex:'', key:{} };
 const exById = id => D.exams.find(e=>e.id===id);
 const fdate = d => d ? new Date(d).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}) : '—';
 
@@ -125,20 +125,28 @@ async function paneQst(){
     <label>Turma: <select id="ft"></select></label></div><div id="bl"></div><div class="tw" id="tb">Carregando…</div>`;
   const fe = document.getElementById('fe'), ft = document.getElementById('ft');
   const fill = ()=>{ const t = [...new Set(D.rows.filter(r=>r.exam_id===fe.value).map(r=>r.class))].sort(); ft.innerHTML = '<option value="">Todas</option>'+t.map(x=>`<option>${esc(x)}</option>`).join(''); };
+  let seq = 0;
   const draw = async ()=>{
-    D.ex = fe.value;
-    const { data, error } = await sb.rpc('view_question_stats', { p_token:TOKEN, p_exam:fe.value, p_class:ft.value||null });
+    const my = ++seq, exId = fe.value, cls = ft.value||null;
+    D.ex = exId;
+    const [st, dt] = await Promise.all([
+      sb.rpc('view_question_stats', { p_token:TOKEN, p_exam:exId, p_class:cls }),
+      sb.rpc('view_question_detail', { p_token:TOKEN, p_exam:exId, p_class:cls })
+    ]);
+    if(my !== seq) return;
+    const { data, error } = st; const det = {}; (dt.data||[]).forEach(r=> det[r.o_q] = r);
+    D.key[exId] = {}; Object.values(det).forEach(r=>{ if(r.o_correct) D.key[exId][r.o_q] = r.o_correct; });
     if(error){ document.getElementById('tb').innerHTML = '<div class="msg err">Não foi possível carregar.</div>'; return; }
     const total = data.length ? data[0].o_students : 0;
     const subj = {}; data.forEach(r=>{ (subj[r.o_subject] ||= []).push(r.o_pct); });
     document.getElementById('bl').innerHTML = `<div class="kpis">${Object.entries(subj).map(([n,a])=>`<div class="kpi"><b>${total?Math.round(a.reduce((x,y)=>x+y,0)/a.length)+'%':'—'}</b>${esc(n)}</div>`).join('')}</div>
       <p class="muted small">Base: ${total} aluno(s) que finalizaram. Questão em branco conta como erro. <b>Toque em uma questão para ver o enunciado completo.</b></p>`;
     const color = p => p>=70?'var(--ok)':p>=40?'#e6a100':'var(--bad)';
-    document.getElementById('tb').innerHTML = `<table><tr><th>Questão</th><th>Disciplina</th><th class="n">% de acerto</th><th></th><th></th></tr>
-      ${data.map(r=>`<tr class="qrow" data-q="${r.o_q}" title="Ver a questão ${r.o_q}"><td><b>${r.o_q}</b></td><td>${esc(r.o_subject)}</td><td class="n">${r.o_pct}%</td><td><div class="bar"><i style="width:${r.o_pct}%;background:${color(r.o_pct)}"></i></div></td><td><button class="btn xs sec">Ver</button></td></tr>`).join('')}</table>`;
-    const by = {}; data.forEach(r=> by[r.o_q] = r);
-    QV.stats = { by, total, cls:ft.value||'' };
-    const e = exById(fe.value);
+    document.getElementById('tb').innerHTML = `<table><tr><th>Questão</th><th>Disciplina</th><th>Gabarito</th><th class="n">% de acerto</th><th></th><th></th></tr>
+      ${data.map(r=>`<tr class="qrow" data-q="${r.o_q}" title="Ver a questão ${r.o_q}"><td><b>${r.o_q}</b></td><td>${esc(r.o_subject)}</td><td><b style="color:var(--ok)">${(det[r.o_q]||{}).o_correct||'—'}</b></td><td class="n">${r.o_pct}%</td><td><div class="bar"><i style="width:${r.o_pct}%;background:${color(r.o_pct)}"></i></div></td><td><button class="btn xs sec">Ver</button></td></tr>`).join('')}</table>`;
+    const by = {}; data.forEach(r=>{ const d = det[r.o_q]||{}; by[r.o_q] = { o_a:d.o_a||0, o_b:d.o_b||0, o_c:d.o_c||0, o_d:d.o_d||0, o_hits:Math.round(r.o_pct*total/100) }; });
+    QV.stats = { by, total, cls:cls||'' };
+    const e = exById(exId);
     document.querySelectorAll('tr.qrow').forEach(tr=> tr.onclick = ()=> openQuestion(e, Number(tr.dataset.q)));
   };
   fe.onchange = ()=>{ fill(); draw(); }; ft.onchange = draw; fill(); draw();
@@ -185,22 +193,24 @@ async function openQuestion(e, n){
   catch(err){ box.innerHTML = `<div class="qvb"><div class="msg err">Não foi possível carregar a questão: ${esc(err.message||err)}</div><button class="btn sec" id="qx">Fechar</button></div>`; document.getElementById('qx').onclick = closeQuestion; return; }
   const i = qs.findIndex(q=>q.number===n), q = qs[i];
   if(!q){ closeQuestion(); return; }
-  const g = null;
-  const st = QV.stats || { by:{}, total:0 }, r = st.by[n];
+  const g = (D.key[e.id]||{})[n];
+  const st = QV.stats || { by:{}, total:0 }, r = st.by[n] || { o_a:0,o_b:0,o_c:0,o_d:0,o_hits:0 };
+  const cnt = { A:r.o_a, B:r.o_b, C:r.o_c, D:r.o_d };
+  const pct = L => st.total ? Math.round(cnt[L]/st.total*100)+'%' : '—';
   const img = q.full_image ? ((window.QIMG && window.QIMG[e.id] && window.QIMG[e.id][q.number]) || q.image_url) : '';
   const body = q.full_image
     ? (img ? `<img class="qimg" src="${esc(img)}" alt="Questão ${q.number}">` : '<div class="msg err">Imagem da questão não encontrada.</div>')
-
+      + `<div class="vs">${['A','B','C','D'].map(L=>`<div class="${g===L?'ok':''}"><b>${L}${g===L?' ✓':''}</b><span class="small">${cnt[L]} · ${pct(L)}</span></div>`).join('')}</div>`
     : `${q.support_text?`<div class="sup">${md(q.support_text)}</div>`:''}
        ${q.image_url?`<img class="fig" src="${esc(q.image_url)}" alt="Figura da questão ${q.number}">`:''}
        <div class="stmt">${md(q.statement)}</div>
-       ${['A','B','C','D'].map(L=>`<div class="vo ${g===L?'ok':''}"><span class="l">${L}</span><span class="x">${inl((q.options||{})[L]||'')}</span></div>`).join('')}`;
-  const hit = (st.total && r) ? r.o_pct+'% de acerto' : 'sem respostas ainda';
+       ${['A','B','C','D'].map(L=>`<div class="vo ${g===L?'ok':''}"><span class="l">${L}</span><span class="x">${inl((q.options||{})[L]||'')}</span><span class="c">${cnt[L]} · ${pct(L)}</span></div>`).join('')}`;
+  const hit = st.total ? Math.round(r.o_hits/st.total*100)+'% de acerto' : 'sem respostas ainda';
   box.innerHTML = `<div class="qvb">
     <div class="qvh"><h2>Questão ${String(q.number).padStart(2,'0')} · ${esc(lbl(e))}</h2>
       <div><button class="btn xs sec" id="qp">Imprimir</button> <button class="btn xs" id="qx">✕ Fechar</button></div></div>
     <span class="bloco">Bloco ${q.block} · ${esc(q.subject)}</span>
-    <p class="small muted" style="margin:0 0 12px">${hit}${st.cls?' na turma '+esc(st.cls):''} · base ${st.total} aluno(s)</p>
+    <p class="small muted" style="margin:0 0 12px">Gabarito: <b style="color:var(--ok)">${g||'não cadastrado'}</b> · ${hit}${st.cls?' na turma '+esc(st.cls):''} · base ${st.total} aluno(s)</p>
     ${body}
     <div class="qvn"><button class="btn sec" id="qa" ${i>0?'':'disabled'}>← Anterior</button><span class="muted small" style="align-self:center">${i+1} de ${qs.length}</span><button class="btn sec" id="qn" ${i<qs.length-1?'':'disabled'}>Próxima →</button></div>
   </div>`;

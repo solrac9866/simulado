@@ -409,9 +409,11 @@ async function paneQst(){
     const t = [...new Set(D.subs.filter(s=>s.exam_id===e.id && (!sid||s.school_id===sid)).map(s=>s.class_name))].sort();
     ft.innerHTML = '<option value="">Todas</option>'+t.map(x=>`<option>${esc(x)}</option>`).join('');
   };
+  let seq = 0;
   const draw = async ()=>{
-    const f = ft.value;
+    const my = ++seq, f = ft.value;
     const { data, error } = await sb.rpc('question_stats', { p_exam:e.id, p_class:f||null, p_school:sidNow() });
+    if(my !== seq || !document.getElementById('tb')) return;
     if(error){ document.getElementById('tb').innerHTML = `<div class="msg err">Erro: ${esc(error.message)}</div>`; return; }
     const by = {}; data.forEach(r=> by[r.o_q] = r);
     const total = data.length ? data[0].o_students : 0;
