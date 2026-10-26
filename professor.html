@@ -65,7 +65,7 @@ textarea{width:100%;font:inherit;padding:10px;border:1.5px solid var(--bor);bord
 .qbox img{max-width:100%;height:auto;display:block;margin:10px auto;border:1px solid var(--bor);border-radius:8px}
 .qhd{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
 .qx{font:inherit;cursor:pointer;border:1.5px solid var(--bor);background:#fff;border-radius:10px;padding:6px 12px;font-weight:700}
-a.qv{color:var(--azul);font-weight:800;text-decoration:underline dotted;cursor:pointer}
+a.qv{color:var(--azul);font-weight:800;text-decoration:underline;cursor:pointer}a.qv:hover{background:var(--azul-cl);border-radius:6px}
 .qopt{margin:6px 0;padding:8px 10px;border:1px solid var(--bor);border-radius:8px}
 </style>
 </head>
@@ -281,6 +281,7 @@ async function recBlock(exId, cls, sid){
   const base = items.length ? items[0].base : 0;
   el.innerHTML = `<h2 style="margin-top:18px">Recomposição de aprendizagem</h2>
     <p class="muted small" style="margin-top:-4px">Questões que a maioria dos alunos errou, para o professor de cada disciplina retomar em sala. <b>Retomar</b>: menos de 40% de acerto. <b>Atenção</b>: de 40% a 59%. Base: ${base} aluno(s).</p>
+    <div class="msg">👆 Clique no número da questão (ou na etiqueta amarela) para ver a questão.</div>
     <div class="g2">${subs.map(sj=>{
       const l = items.filter(i=>i.subj===sj).sort((a,b)=>a.p-b.p||a.n-b.n);
       const low = l.filter(i=>i.p<40), mid = l.filter(i=>i.p>=40&&i.p<60);
@@ -517,7 +518,7 @@ async function paneQst(){
   pane().innerHTML = `<div class="card"><h2>Desempenho por questão · ${esc(lbl(e))}</h2>
     ${Object.keys(key).length?'':'<div class="msg info">Esta prova ainda não tem gabarito cadastrado, então o percentual de acerto não aparece.</div>'}
     <div class="row">${D.admin?schoolSel('fs', D.fs, true):''}<label>Turma: <select id="ft"></select></label></div>
-    <div id="bl"></div><div class="tw" id="tb">Carregando…</div></div>`;
+    <div id="bl"></div><div class="msg">👆 Clique no número da questão (primeira coluna) para ver a questão.</div><div class="tw" id="tb">Carregando…</div></div>`;
   const fs = document.getElementById('fs'), ft = document.getElementById('ft');
   const fillT = ()=>{
     const sid = fs ? fs.value : '';
@@ -535,7 +536,7 @@ async function paneQst(){
     document.getElementById('bl').innerHTML = `<div class="kpis">${Object.entries(subj).map(([n,x])=>`<div class="kpi"><b>${x.poss?Math.round(x.hit/x.poss*100)+'%':'—'}</b>${esc(n)}</div>`).join('')}</div>
       <p class="muted small">Base: ${total} aluno(s) que finalizaram${f?' na turma '+esc(f):''}. Questão em branco conta como erro.</p>`;
     const color = p => p>=70?'var(--ok)':p>=40?'#e6a100':'var(--bad)';
-    document.getElementById('tb').innerHTML = `<table><tr><th>Q</th><th>Disciplina</th><th>Gabarito</th><th class="n">% acerto</th><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr>
+    document.getElementById('tb').innerHTML = `<table><tr><th>Q 🔍</th><th>Disciplina</th><th>Gabarito</th><th class="n">% acerto</th><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr>
       ${qs.map(q=>{ const r = by[q.number]||{o_a:0,o_b:0,o_c:0,o_d:0,o_hits:0}, p = total? Math.round(r.o_hits/total*100):0, g = key[q.number];
         const alt = {A:r.o_a,B:r.o_b,C:r.o_c,D:r.o_d};
         return `<tr><td>${qlink(e.id,q.number,'<b>'+q.number+'</b>')}</td><td>${esc(q.subject)}</td><td>${g||'—'}</td><td class="n">${p}%</td>

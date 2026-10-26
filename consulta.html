@@ -44,7 +44,7 @@ th{background:var(--azul-cl)} td.n,th.n{text-align:right}
 .qbox img{max-width:100%;height:auto;display:block;margin:10px auto;border:1px solid var(--bor);border-radius:8px}
 .qhd{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
 .qx{font:inherit;cursor:pointer;border:1.5px solid var(--bor);background:#fff;border-radius:10px;padding:6px 12px;font-weight:700}
-a.qv{color:var(--azul);font-weight:800;text-decoration:underline dotted;cursor:pointer}
+a.qv{color:var(--azul);font-weight:800;text-decoration:underline;cursor:pointer}a.qv:hover{background:var(--azul-cl);border-radius:6px}
 .qopt{margin:6px 0;padding:8px 10px;border:1px solid var(--bor);border-radius:8px}
 </style>
 </head>
@@ -125,6 +125,7 @@ async function recBlock(exId, cls, sid){
   const base = items.length ? items[0].base : 0;
   el.innerHTML = `<h2 style="margin-top:18px">Recomposição de aprendizagem</h2>
     <p class="muted small" style="margin-top:-4px">Questões que a maioria dos alunos errou, para o professor de cada disciplina retomar em sala. <b>Retomar</b>: menos de 40% de acerto. <b>Atenção</b>: de 40% a 59%. Base: ${base} aluno(s).</p>
+    <div class="msg">👆 Clique no número da questão (ou na etiqueta amarela) para ver a questão.</div>
     <div class="g2">${subs.map(sj=>{
       const l = items.filter(i=>i.subj===sj).sort((a,b)=>a.p-b.p||a.n-b.n);
       const low = l.filter(i=>i.p<40), mid = l.filter(i=>i.p>=40&&i.p<60);
@@ -231,7 +232,7 @@ const qlink = (exId, n, txt) => `<a href="#" class="qv" data-qv="${esc(exId)}|${
 async function paneQst(){
   const pane = document.getElementById('pane');
   pane.innerHTML = `<div class="row"><label>Prova: <select id="fe">${D.exams.map(e=>`<option value="${e.id}" ${e.id===D.ex?'selected':''}>${lbl(e)}</option>`).join('')}</select></label>
-    <label>Turma: <select id="ft"></select></label></div><div id="bl"></div><div class="tw" id="tb">Carregando…</div>`;
+    <label>Turma: <select id="ft"></select></label></div><div id="bl"></div><div class="msg">👆 Clique no número da questão (primeira coluna) para ver a questão.</div><div class="tw" id="tb">Carregando…</div>`;
   const fe = document.getElementById('fe'), ft = document.getElementById('ft');
   const fill = ()=>{ const t = [...new Set(D.rows.filter(r=>r.exam_id===fe.value).map(r=>r.class))].sort(); ft.innerHTML = '<option value="">Todas</option>'+t.map(x=>`<option>${esc(x)}</option>`).join(''); };
   const draw = async ()=>{
@@ -243,7 +244,7 @@ async function paneQst(){
     document.getElementById('bl').innerHTML = `<div class="kpis">${Object.entries(subj).map(([n,a])=>`<div class="kpi"><b>${total?Math.round(a.reduce((x,y)=>x+y,0)/a.length)+'%':'—'}</b>${esc(n)}</div>`).join('')}</div>
       <p class="muted small">Base: ${total} aluno(s) que finalizaram. Questão em branco conta como erro.</p>`;
     const color = p => p>=70?'var(--ok)':p>=40?'#e6a100':'var(--bad)';
-    document.getElementById('tb').innerHTML = `<table><tr><th>Questão</th><th>Disciplina</th><th class="n">% de acerto</th><th></th></tr>
+    document.getElementById('tb').innerHTML = `<table><tr><th>Questão 🔍</th><th>Disciplina</th><th class="n">% de acerto</th><th></th></tr>
       ${data.map(r=>`<tr><td>${qlink(fe.value,r.o_q,'<b>'+r.o_q+'</b>')}</td><td>${esc(r.o_subject)}</td><td class="n">${r.o_pct}%</td><td><div class="bar"><i style="width:${r.o_pct}%;background:${color(r.o_pct)}"></i></div></td></tr>`).join('')}</table>`;
   };
   fe.onchange = ()=>{ fill(); draw(); }; ft.onchange = draw; fill(); draw();
