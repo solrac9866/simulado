@@ -102,6 +102,29 @@ function paneRes(){
 const SUBC = {'Língua Portuguesa':'#0b5cab','Matemática':'#8e44ad','Ciências':'#1f8a4c','Língua Inglesa':'#d35400','Geografia':'#b8860b','História':'#c0392b'};
 const subCol = n => SUBC[n] || '#5d6b7a';
 const pcol = p => p>=70?'var(--ok)':p>=40?'#e6a100':'var(--bad)';
+
+let REC_N = 0;
+async function recBlock(exId, cls, sid){
+  const el = document.getElementById('rec'); if(!el) return;
+  const my = ++REC_N; el.innerHTML = '<p class="muted small">Calculando recomposição…</p>';
+  const { data, error } = await sb.rpc('view_question_stats', { p_token:TOKEN, p_exam:exId, p_class:cls||null });
+  if(my!==REC_N) return;
+  if(error || !data){ el.innerHTML=''; return; }
+  const items = data.map(r=>({ n:r.o_q, subj:r.o_subject, st:'', p:r.o_pct, base:r.o_students }));
+  const noKey = false;
+  if(noKey){ el.innerHTML = '<div class="msg info">Cadastre o gabarito desta prova para ver as questões de recomposição.</div>'; return; }
+  const subs = [...new Set(items.map(i=>i.subj))];
+  const base = items.length ? items[0].base : 0;
+  el.innerHTML = `<h2 style="margin-top:18px">Recomposição de aprendizagem</h2>
+    <p class="muted small" style="margin-top:-4px">Questões que a maioria dos alunos errou, para o professor de cada disciplina retomar em sala. <b>Retomar</b>: menos de 40% de acerto. <b>Atenção</b>: de 40% a 59%. Base: ${base} aluno(s).</p>
+    <div class="g2">${subs.map(sj=>{
+      const l = items.filter(i=>i.subj===sj).sort((a,b)=>a.p-b.p||a.n-b.n);
+      const low = l.filter(i=>i.p<40), mid = l.filter(i=>i.p>=40&&i.p<60);
+      return `<div class="ch" style="border-top:4px solid ${subCol(sj)}"><h2>${esc(sj)}</h2>
+        ${low.length?`<div style="color:var(--bad);font-weight:700;margin:6px 0">Retomar (${low.length} de ${l.length} questões)</div>${low.map(it=>`<div style="margin:6px 0"><b>Questão ${it.n}</b> · <span style="color:var(--bad);font-weight:700">${it.p}% de acerto</span></div>`).join('')}`:'<div style="color:var(--ok);font-weight:700;margin:6px 0">Nenhuma questão abaixo de 40% ✓</div>'}
+        ${mid.length?`<div style="color:#9a6b00;font-weight:700;margin:10px 0 4px">Atenção</div><div>${mid.map(it=>`<span class="cell" style="background:#fdf0cf;margin:2px 4px 2px 0">Q${it.n} · ${it.p}%</span>`).join('')}</div>`:''}
+      </div>`; }).join('')}</div>`;
+}
 async function paneDis(){
   const pane = document.getElementById('pane');
   if(!D.sub){
@@ -148,11 +171,13 @@ async function paneDis(){
         <div class="cl"><span style="--c:var(--bad)">menos de 40%</span><span style="--c:#e6a100">40% a 69%</span><span style="--c:var(--ok)">70% ou mais</span></div></div>`;
     }
     h += '</div>';
+    h += one ? '' : '<div id="rec"></div>';
     h += `<h2 style="margin-top:16px">Acertos por aluno</h2><div class="tw"><table><tr><th>Aluno</th><th>Turma</th>${subs.map(sj=>`<th class="n">${esc(sj)}</th>`).join('')}<th class="n">Total</th></tr>
       ${set.map(r=>{ let ok=0,t=0; const cells=subs.map(sj=>{ const v=r.subjects[sj]||[0,0]; ok+=v[0]; t+=v[1]; const p=v[1]?Math.round(v[0]/v[1]*100):0; const bg=p>=70?'#dff3e7':p>=40?'#fdf0cf':'#fbe0dc'; return `<td class="n"><span class="cell" style="background:${bg}">${v[0]}/${v[1]}</span></td>`; }).join('');
         return `<tr><td>${esc(r.name)}</td><td>${esc(r.class)}</td>${cells}<td class="n"><b>${ok}/${t}</b></td></tr>`; }).join('')}</table></div>
       <p class="muted small">Considera só a prova finalizada com a maior nota de cada aluno. Questão em branco conta como erro.</p>`;
     document.getElementById('out').innerHTML = h;
+    if(!one) recBlock(fe.value, ft.value, null);
   };
   fe.onchange = fillT; ft.onchange = fillA; fa.onchange = draw; fillT();
 }

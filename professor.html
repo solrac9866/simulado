@@ -52,29 +52,13 @@ textarea{width:100%;font:inherit;padding:10px;border:1.5px solid var(--bor);bord
 .lk input{flex:1;min-width:220px}
 #lg,#pw{width:100%}
 .lb{display:block;font-weight:600;margin:12px 0 6px}
-tr.qrow{cursor:pointer} tr.qrow:hover td{background:#f6f9fd}
-.qv{position:fixed;inset:0;background:rgba(10,25,45,.55);z-index:50;display:flex;justify-content:center;align-items:flex-start;overflow-y:auto;padding:16px}
-.qvb{background:#fff;border-radius:14px;max-width:820px;width:100%;padding:18px;margin:auto 0}
-.qvh{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-.qvh h2{margin:0;color:var(--azul-esc)}
-.bloco{display:inline-block;background:var(--azul);color:#fff;font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px;margin-bottom:10px}
-.sup{background:#f8fafc;border-left:4px solid var(--azul);border-radius:8px;padding:12px 14px;margin:0 0 14px}
-.sup p{margin:0 0 .7em}.sup p:last-child{margin:0}
-.qvb table{margin:6px 0}.qvb td,.qvb th{white-space:normal}
-.stmt{font-weight:600;margin:0 0 14px}.stmt p{margin:0}
-.fig{display:block;max-width:100%;height:auto;margin:0 auto 14px;border-radius:8px;border:1px solid var(--bor)}
-.qimg{display:block;width:100%;height:auto;border:1px solid var(--bor);border-radius:8px;margin-bottom:14px}
-.vo{display:flex;gap:12px;align-items:flex-start;border:2px solid var(--bor);border-radius:12px;padding:10px 14px;margin-bottom:8px}
-.vo .l{flex:0 0 30px;height:30px;border-radius:50%;background:var(--azul-cl);color:var(--azul-esc);font-weight:800;display:grid;place-items:center}
-.vo .x{flex:1;padding-top:3px}
-.vo .c{flex:0 0 auto;font-size:.85rem;color:var(--mut);padding-top:5px;white-space:nowrap}
-.vo.ok{border-color:var(--ok);background:#f0faf4}.vo.ok .l{background:var(--ok);color:#fff}
-.vs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
-.vs div{border:2px solid var(--bor);border-radius:10px;padding:8px;text-align:center}
-.vs div.ok{border-color:var(--ok);background:#f0faf4}
-.vs b{display:block;font-size:1.2rem}
-.qvn{display:flex;justify-content:space-between;gap:8px;margin-top:14px}
-@media print{.qvh button,.qvn{display:none}.qv{position:static;background:none;padding:0}}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.ch{border:1px solid var(--bor);border-radius:12px;padding:14px}
+.hb{display:grid;grid-template-columns:130px 1fr 92px;gap:8px;align-items:center;margin:7px 0;font-size:.9rem}
+.hb .t{height:16px;background:#e6ebf1;border-radius:6px;overflow:hidden}.hb .t i{display:block;height:100%;border-radius:6px}
+.hb .v{text-align:right;font-variant-numeric:tabular-nums}
+.cl{display:flex;gap:12px;flex-wrap:wrap;font-size:.8rem;margin-bottom:6px}.cl span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;background:var(--c)}
+.dcell{border-radius:8px;padding:3px 8px;font-weight:700;display:inline-block;min-width:58px;text-align:center}
 </style>
 </head>
 <body>
@@ -214,7 +198,7 @@ const baseUrl = () => location.origin + location.pathname.replace(/professor\.ht
 const schoolSel = (id, val, withAll) => `<label><b>Escola:</b> <select id="${id}">${withAll?`<option value="">Todas as escolas</option>`:''}${D.schools.map(x=>`<option value="${x.id}" ${x.id===val?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>`;
 
 function render(){
-  const tabs = [['sim','Provas'],['gab','Gabarito'],['res','Resultados'],['qst','Por questão'],['esc',D.admin?'Escolas':'Minha escola']];
+  const tabs = [['sim','Provas'],['gab','Gabarito'],['res','Resultados'],['qst','Por questão'],['dis','Por disciplina'],['esc',D.admin?'Escolas':'Minha escola']];
   app.innerHTML = `
     <div class="head"><div><h1>Painel do Professor</h1><div class="muted small">${D.admin?'Administrador · todas as escolas':esc((D.schools[0]||{}).name||'')} · Simulado SARESP 2026</div></div>
       <div><button class="btn sec" id="rf">↻ Atualizar</button> <button class="btn sec" id="so">Sair</button></div></div>
@@ -227,9 +211,93 @@ function render(){
   if(sel) sel.onchange = ()=>{ D.ex = sel.value; try{ localStorage.setItem('prof_ex', D.ex); }catch(_){} render(); };
   document.getElementById('rf').onclick = async ()=>{ await loadAll(); render(); };
   document.getElementById('so').onclick = async ()=>{ await sb.auth.signOut(); location.href = location.pathname; };
-  ({ sim:paneSim, gab:paneGab, res:paneRes, qst:paneQst, esc:paneEsc })[D.tab]();
+  ({ sim:paneSim, gab:paneGab, res:paneRes, qst:paneQst, dis:paneDis, esc:paneEsc })[D.tab]();
 }
 const pane = () => document.getElementById('pane');
+const SUBC = {'Língua Portuguesa':'#0b5cab','Matemática':'#8e44ad','Ciências':'#1f8a4c','Língua Inglesa':'#d35400','Geografia':'#b8860b','História':'#c0392b'};
+const subCol = n => SUBC[n] || '#5d6b7a';
+const pcol = p => p>=70?'var(--ok)':p>=40?'#e6a100':'var(--bad)';
+
+let REC_N = 0;
+async function recBlock(exId, cls, sid){
+  const el = document.getElementById('rec'); if(!el) return;
+  const my = ++REC_N; el.innerHTML = '<p class="muted small">Calculando recomposição…</p>';
+  const e = exById(exId); const key = D.key[exId]||{};
+  const { data, error } = await sb.rpc('question_stats', { p_exam:exId, p_class:cls||null, p_school:sid||null });
+  if(my!==REC_N) return;
+  if(error || !data){ el.innerHTML=''; return; }
+  const qmap = {}; D.qs.filter(q=>q.exam_id===exId).forEach(q=>qmap[q.number]=q);
+  const items = data.map(r=>({ n:r.o_q, subj:(qmap[r.o_q]||{}).subject||'', st:(qmap[r.o_q]||{}).statement||'', p: r.o_students? Math.round(r.o_hits/r.o_students*100):0, base:r.o_students }));
+  const noKey = !Object.keys(key).length;
+  if(noKey){ el.innerHTML = '<div class="msg info">Cadastre o gabarito desta prova para ver as questões de recomposição.</div>'; return; }
+  const subs = [...new Set(items.map(i=>i.subj))];
+  const base = items.length ? items[0].base : 0;
+  el.innerHTML = `<h2 style="margin-top:18px">Recomposição de aprendizagem</h2>
+    <p class="muted small" style="margin-top:-4px">Questões que a maioria dos alunos errou, para o professor de cada disciplina retomar em sala. <b>Retomar</b>: menos de 40% de acerto. <b>Atenção</b>: de 40% a 59%. Base: ${base} aluno(s).</p>
+    <div class="g2">${subs.map(sj=>{
+      const l = items.filter(i=>i.subj===sj).sort((a,b)=>a.p-b.p||a.n-b.n);
+      const low = l.filter(i=>i.p<40), mid = l.filter(i=>i.p>=40&&i.p<60);
+      return `<div class="ch" style="border-top:4px solid ${subCol(sj)}"><h2>${esc(sj)}</h2>
+        ${low.length?`<div style="color:var(--bad);font-weight:700;margin:6px 0">Retomar (${low.length} de ${l.length} questões)</div>${low.map(it=>`<div style="margin:6px 0"><b>Questão ${it.n}</b> · <span style="color:var(--bad);font-weight:700">${it.p}% de acerto</span>${it.st?`<div class="muted small">${esc(it.st.replace(/\s+/g,' ').slice(0,140))}${it.st.length>140?'…':''}</div>`:''}</div>`).join('')}`:'<div style="color:var(--ok);font-weight:700;margin:6px 0">Nenhuma questão abaixo de 40% ✓</div>'}
+        ${mid.length?`<div style="color:#9a6b00;font-weight:700;margin:10px 0 4px">Atenção</div><div>${mid.map(it=>`<span class="dcell" style="background:#fdf0cf;margin:2px 4px 2px 0">Q${it.n} · ${it.p}%</span>`).join('')}</div>`:''}
+      </div>`; }).join('')}</div>`;
+}
+async function paneDis(){
+  pane().innerHTML = '<div class="card">Carregando…</div>';
+  const rq = await sb.rpc('subject_stats', { p_school:null });
+  if(rq.error || !rq.data){ pane().innerHTML = '<div class="card"><div class="msg err">Não foi possível carregar os dados por disciplina.</div></div>'; return; }
+  D.sub = rq.data;
+  const exs = D.exams.filter(e=>D.sub.some(r=>r.exam_id===e.id));
+  if(!exs.length){ pane().innerHTML = '<div class="card"><div class="msg info">Ainda não há alunos que finalizaram a prova.</div></div>'; return; }
+  if(!exs.some(e=>e.id===D.dex)) D.dex = exs[0].id;
+  pane().innerHTML = `<div class="card"><h2>Desempenho por disciplina</h2><div class="row"><label>Prova: <select id="fe">${exs.map(e=>`<option value="${e.id}" ${e.id===D.dex?'selected':''}>${lbl(e)}</option>`).join('')}</select></label>
+    ${D.admin?schoolSel('fs', D.fs, true):''}<label>Turma: <select id="ft"></select></label><label>Aluno: <select id="fa"></select></label></div><div id="out"></div></div>`;
+  const fe = document.getElementById('fe'), ft = document.getElementById('ft'), fa = document.getElementById('fa');
+  const fs = document.getElementById('fs');
+  const ofExam = ()=> D.sub.filter(r=>r.exam_id===fe.value && (!fs||!fs.value||r.school_id===fs.value));
+  const fillT = ()=>{ D.dex = fe.value; const t=[...new Set(ofExam().map(r=>r.class))].sort(); ft.innerHTML='<option value="">Todas</option>'+t.map(x=>`<option>${esc(x)}</option>`).join(''); fillA(); };
+  const fillA = ()=>{ const l=ofExam().filter(r=>!ft.value||r.class===ft.value); fa.innerHTML='<option value="">Todos (visão geral)</option>'+l.map((r,i)=>`<option value="${esc(r.class+'|'+r.name+'|'+i)}">${esc(r.name)} · ${esc(r.class)}</option>`).join(''); fa._l=l; draw(); };
+  const draw = ()=>{
+    const l = fa._l, ai = fa.value ? +fa.value.split('|').pop() : -1, one = ai>=0 ? l[ai] : null;
+    const set = one ? [one] : l;
+    const subs = Object.keys((l[0]||{}).subjects||{});
+    const agg = (rows,sj)=>{ let ok=0,t=0; rows.forEach(r=>{ const v=r.subjects[sj]; if(v){ ok+=v[0]; t+=v[1]; } }); return { ok, t, p: t?Math.round(ok/t*100):0 }; };
+    let h = '';
+    if(one){
+      h += `<div class="kpis"><div class="kpi"><b>${esc(one.name)}</b>${esc(one.class)}</div>${subs.map(sj=>{ const v=one.subjects[sj]; return `<div class="kpi"><b>${v[0]}/${v[1]}</b>${esc(sj)}</div>`; }).join('')}</div>`;
+    } else {
+      h += `<div class="kpis"><div class="kpi"><b>${set.length}</b>alunos considerados</div>${subs.map(sj=>`<div class="kpi"><b>${agg(set,sj).p}%</b>${esc(sj)}</div>`).join('')}</div>`;
+    }
+    h += '<div class="g2">';
+    h += `<div class="ch"><h2>${one?'Acertos de '+esc(one.name)+' por disciplina':'Aproveitamento por disciplina'}</h2>${subs.map(sj=>{ const a=agg(set,sj); return `<div class="hb"><span>${esc(sj)}</span><div class="t"><i style="width:${a.p}%;background:${subCol(sj)}"></i></div><span class="v">${one?a.ok+' de '+a.t:a.p+'%'}</span></div>`; }).join('')}
+      <p class="muted small">${one?'Quantidade de questões certas em cada disciplina.':'Porcentagem de acertos de todos os alunos selecionados (cada aluno conta uma vez, pela maior nota).'}</p></div>`;
+    if(!one){
+      h += `<div class="ch"><h2>Média de acertos por aluno</h2>${subs.map(sj=>{ const a=agg(set,sj), mo=set.length?a.ok/set.length:0, mt=set.length?a.t/set.length:0; return `<div class="hb"><span>${esc(sj)}</span><div class="t"><i style="width:${a.p}%;background:${subCol(sj)}"></i></div><span class="v">${mo.toFixed(1)} de ${mt}</span></div>`; }).join('')}
+        <p class="muted small">Em média, quantas questões cada aluno acertou em cada disciplina.</p></div>`;
+      const turmas = [...new Set(l.map(r=>r.class))].sort();
+      if(turmas.length>1){
+        h += `<div class="ch" style="grid-column:1/-1"><h2>Comparação entre turmas</h2><div class="cl">${subs.map(sj=>`<span style="--c:${subCol(sj)}">${esc(sj)}</span>`).join('')}</div>
+          ${turmas.map(t=>{ const rs=l.filter(r=>r.class===t); return `<div style="margin:10px 0"><b>${esc(t)}</b> <span class="muted small">(${rs.length} aluno${rs.length>1?'s':''})</span>${subs.map(sj=>{ const a=agg(rs,sj); return `<div class="hb" style="grid-template-columns:96px 1fr 48px"><span class="muted small">${esc(sj.replace('Língua ','L. '))}</span><div class="t"><i style="width:${a.p}%;background:${subCol(sj)}"></i></div><span class="v">${a.p}%</span></div>`; }).join('')}</div>`; }).join('')}</div>`;
+      }
+      // distribuição de acertos em cada disciplina (faixas)
+      h += `<div class="ch" style="grid-column:1/-1"><h2>Quantos alunos em cada faixa de acerto</h2>${subs.map(sj=>{ const b=[0,0,0]; set.forEach(r=>{ const v=r.subjects[sj]; const p=v[1]?v[0]/v[1]*100:0; b[p>=70?2:p>=40?1:0]++; }); const n=set.length||1;
+        return `<div style="margin:10px 0"><b>${esc(sj)}</b><div style="display:flex;height:22px;border-radius:7px;overflow:hidden;margin-top:4px;font-size:.78rem;color:#fff;font-weight:700">
+          <div style="width:${b[0]/n*100}%;background:var(--bad);text-align:center">${b[0]||''}</div><div style="width:${b[1]/n*100}%;background:#e6a100;text-align:center">${b[1]||''}</div><div style="width:${b[2]/n*100}%;background:var(--ok);text-align:center">${b[2]||''}</div></div></div>`; }).join('')}
+        <div class="cl"><span style="--c:var(--bad)">menos de 40%</span><span style="--c:#e6a100">40% a 69%</span><span style="--c:var(--ok)">70% ou mais</span></div></div>`;
+    }
+    h += '</div>';
+    h += one ? '' : '<div id="rec"></div>';
+    h += `<h2 style="margin-top:16px">Acertos por aluno</h2><div class="tw"><table><tr><th>Aluno</th><th>Turma</th>${subs.map(sj=>`<th class="n">${esc(sj)}</th>`).join('')}<th class="n">Total</th></tr>
+      ${set.map(r=>{ let ok=0,t=0; const cells=subs.map(sj=>{ const v=r.subjects[sj]||[0,0]; ok+=v[0]; t+=v[1]; const p=v[1]?Math.round(v[0]/v[1]*100):0; const bg=p>=70?'#dff3e7':p>=40?'#fdf0cf':'#fbe0dc'; return `<td class="n"><span class="dcell" style="background:${bg}">${v[0]}/${v[1]}</span></td>`; }).join('');
+        return `<tr><td>${esc(r.name)}</td><td>${esc(r.class)}</td>${cells}<td class="n"><b>${ok}/${t}</b></td></tr>`; }).join('')}</table></div>
+      <p class="muted small">Considera só a prova finalizada com a maior nota de cada aluno. Questão em branco conta como erro.</p>`;
+    document.getElementById('out').innerHTML = h;
+    if(!one) recBlock(fe.value, ft.value, fs&&fs.value);
+  };
+  if(fs) fs.onchange = ()=>{ D.fs = fs.value; fillT(); };
+  fe.onchange = fillT; ft.onchange = fillA; fa.onchange = draw; fillT();
+}
+
 const flash = (html,cls='ok') => { const m = document.getElementById('fm'); if(m) m.innerHTML = `<div class="msg ${cls}">${html}</div>`; };
 const countsOf = (id, sid) => { const s = D.subs.filter(x=>x.exam_id===id && x.school_id===sid); return { n:s.length, f:s.filter(x=>x.finished_at).length }; };
 async function callFn(body){
@@ -409,110 +477,28 @@ async function paneQst(){
     const t = [...new Set(D.subs.filter(s=>s.exam_id===e.id && (!sid||s.school_id===sid)).map(s=>s.class_name))].sort();
     ft.innerHTML = '<option value="">Todas</option>'+t.map(x=>`<option>${esc(x)}</option>`).join('');
   };
-  let seq = 0;
   const draw = async ()=>{
-    const my = ++seq, f = ft.value;
+    const f = ft.value;
     const { data, error } = await sb.rpc('question_stats', { p_exam:e.id, p_class:f||null, p_school:sidNow() });
-    if(my !== seq || !document.getElementById('tb')) return;
     if(error){ document.getElementById('tb').innerHTML = `<div class="msg err">Erro: ${esc(error.message)}</div>`; return; }
     const by = {}; data.forEach(r=> by[r.o_q] = r);
     const total = data.length ? data[0].o_students : 0;
     const subj = {};
     qs.forEach(q=>{ const r = by[q.number], s = subj[q.subject] ||= { hit:0, poss:0 }; s.hit += r?r.o_hits:0; s.poss += total; });
     document.getElementById('bl').innerHTML = `<div class="kpis">${Object.entries(subj).map(([n,x])=>`<div class="kpi"><b>${x.poss?Math.round(x.hit/x.poss*100)+'%':'—'}</b>${esc(n)}</div>`).join('')}</div>
-      <p class="muted small">Base: ${total} aluno(s) que finalizaram${f?' na turma '+esc(f):''}. Questão em branco conta como erro. <b>Toque em uma questão para ver o enunciado completo.</b></p>`;
+      <p class="muted small">Base: ${total} aluno(s) que finalizaram${f?' na turma '+esc(f):''}. Questão em branco conta como erro.</p>`;
     const color = p => p>=70?'var(--ok)':p>=40?'#e6a100':'var(--bad)';
-    document.getElementById('tb').innerHTML = `<table><tr><th>Q</th><th>Disciplina</th><th>Gabarito</th><th class="n">% acerto</th><th></th><th>A</th><th>B</th><th>C</th><th>D</th><th></th></tr>
+    document.getElementById('tb').innerHTML = `<table><tr><th>Q</th><th>Disciplina</th><th>Gabarito</th><th class="n">% acerto</th><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr>
       ${qs.map(q=>{ const r = by[q.number]||{o_a:0,o_b:0,o_c:0,o_d:0,o_hits:0}, p = total? Math.round(r.o_hits/total*100):0, g = key[q.number];
         const alt = {A:r.o_a,B:r.o_b,C:r.o_c,D:r.o_d};
-        return `<tr class="qrow" data-q="${q.number}" title="Ver a questão ${q.number}"><td><b>${q.number}</b></td><td>${esc(q.subject)}</td><td>${g||'—'}</td><td class="n">${p}%</td>
+        return `<tr><td><b>${q.number}</b></td><td>${esc(q.subject)}</td><td>${g||'—'}</td><td class="n">${p}%</td>
           <td><div class="bar"><i style="width:${p}%;background:${color(p)}"></i></div></td>
-          ${['A','B','C','D'].map(L=>`<td style="${g===L?'font-weight:800;color:var(--ok)':''}">${alt[L]}</td>`).join('')}<td><button class="btn xs sec">Ver</button></td></tr>`; }).join('')}</table>`;
-    QV.stats = { by, total, cls:f };
-    document.querySelectorAll('tr.qrow').forEach(tr=> tr.onclick = ()=> openQuestion(e, Number(tr.dataset.q)));
+          ${['A','B','C','D'].map(L=>`<td style="${g===L?'font-weight:800;color:var(--ok)':''}">${alt[L]}</td>`).join('')}</tr>`; }).join('')}</table>`;
   };
   ft.onchange = draw;
   if(fs) fs.onchange = ()=>{ D.fs = fs.value; fillT(); draw(); };
   fillT(); draw();
 }
-
-/* ---------- visualizar a questão completa ---------- */
-const QV = { cache:{}, stats:null };
-function inl(t){
-  return esc(t).replace(/\*\*\*(.+?)\*\*\*/g,'<b><i>$1</i></b>').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
-    .replace(/\*(.+?)\*/g,'<i>$1</i>').replace(/\bT_([FC])\b/g,'T<sub>$1</sub>');
-}
-function md(t){
-  if(!t) return '';
-  return t.split(/\n\s*\n/).map(b=>{
-    const lines = b.split('\n');
-    if(lines[0].trim().startsWith('|')){
-      const rows = lines.filter(l=>l.trim().startsWith('|')).map(l=>l.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim()));
-      return '<div class="tw"><table>'+rows.map((r,i)=>'<tr>'+r.map(c=>i===0?`<th>${inl(c)}</th>`:`<td>${inl(c)}</td>`).join('')+'</tr>').join('')+'</table></div>';
-    }
-    if(lines.every(l=>/^\d+\.\s/.test(l.trim()))) return '<ol>'+lines.map(l=>`<li>${inl(l.trim().replace(/^\d+\.\s/,''))}</li>`).join('')+'</ol>';
-    return '<p>'+lines.map(inl).join('<br>')+'</p>';
-  }).join('');
-}
-async function examQuestions(id){
-  if(QV.cache[id]) return QV.cache[id];
-  const { data, error } = await sb.from('questions')
-    .select('number,block,subject,support_text,image_url,full_image,statement,options').eq('exam_id', id).order('number');
-  if(error) throw error;
-  if(data.some(q=>q.full_image) && !(window.QIMG && window.QIMG[id])){
-    await new Promise(res=>{ const s = document.createElement('script'); s.src = 'q-'+id+'.js'; s.onload = s.onerror = res; document.head.appendChild(s); });
-  }
-  return (QV.cache[id] = data);
-}
-async function openQuestion(e, n){
-  let box = document.getElementById('qv');
-  if(!box){
-    box = document.createElement('div'); box.id = 'qv'; box.className = 'qv';
-    box.onclick = ev=>{ if(ev.target===box) closeQuestion(); };
-    document.body.appendChild(box);
-    document.addEventListener('keydown', qvKeys);
-  }
-  box.innerHTML = '<div class="qvb"><p class="muted">Carregando a questão…</p></div>';
-  let qs;
-  try{ qs = await examQuestions(e.id); }
-  catch(err){ box.innerHTML = `<div class="qvb"><div class="msg err">Não foi possível carregar a questão: ${esc(err.message||err)}</div><button class="btn sec" id="qx">Fechar</button></div>`; document.getElementById('qx').onclick = closeQuestion; return; }
-  const i = qs.findIndex(q=>q.number===n), q = qs[i];
-  if(!q){ closeQuestion(); return; }
-  const g = (D.key[e.id]||{})[n];
-  const st = QV.stats || { by:{}, total:0 }, r = st.by[n] || { o_a:0,o_b:0,o_c:0,o_d:0,o_hits:0 };
-  const cnt = { A:r.o_a, B:r.o_b, C:r.o_c, D:r.o_d };
-  const pct = L => st.total ? Math.round(cnt[L]/st.total*100)+'%' : '—';
-  const img = q.full_image ? ((window.QIMG && window.QIMG[e.id] && window.QIMG[e.id][q.number]) || q.image_url) : '';
-  const body = q.full_image
-    ? (img ? `<img class="qimg" src="${esc(img)}" alt="Questão ${q.number}">` : '<div class="msg err">Imagem da questão não encontrada.</div>')
-      + `<div class="vs">${['A','B','C','D'].map(L=>`<div class="${g===L?'ok':''}"><b>${L}${g===L?' ✓':''}</b><span class="small">${cnt[L]} · ${pct(L)}</span></div>`).join('')}</div>`
-    : `${q.support_text?`<div class="sup">${md(q.support_text)}</div>`:''}
-       ${q.image_url?`<img class="fig" src="${esc(q.image_url)}" alt="Figura da questão ${q.number}">`:''}
-       <div class="stmt">${md(q.statement)}</div>
-       ${['A','B','C','D'].map(L=>`<div class="vo ${g===L?'ok':''}"><span class="l">${L}</span><span class="x">${inl((q.options||{})[L]||'')}</span><span class="c">${cnt[L]} · ${pct(L)}</span></div>`).join('')}`;
-  const hit = st.total ? Math.round(r.o_hits/st.total*100)+'% de acerto' : 'sem respostas ainda';
-  box.innerHTML = `<div class="qvb">
-    <div class="qvh"><h2>Questão ${String(q.number).padStart(2,'0')} · ${esc(lbl(e))}</h2>
-      <div><button class="btn xs sec" id="qp">Imprimir</button> <button class="btn xs" id="qx">✕ Fechar</button></div></div>
-    <span class="bloco">Bloco ${q.block} · ${esc(q.subject)}</span>
-    <p class="small muted" style="margin:0 0 12px">Gabarito: <b style="color:var(--ok)">${g||'não cadastrado'}</b> · ${hit}${st.cls?' na turma '+esc(st.cls):''} · base ${st.total} aluno(s)</p>
-    ${body}
-    <div class="qvn"><button class="btn sec" id="qa" ${i>0?'':'disabled'}>← Anterior</button><span class="muted small" style="align-self:center">${i+1} de ${qs.length}</span><button class="btn sec" id="qn" ${i<qs.length-1?'':'disabled'}>Próxima →</button></div>
-  </div>`;
-  box.scrollTop = 0;
-  QV.cur = { e, prev: i>0 ? qs[i-1].number : null, next: i<qs.length-1 ? qs[i+1].number : null };
-  document.getElementById('qx').onclick = closeQuestion;
-  document.getElementById('qp').onclick = ()=> window.print();
-  document.getElementById('qa').onclick = ()=> QV.cur.prev && openQuestion(e, QV.cur.prev);
-  document.getElementById('qn').onclick = ()=> QV.cur.next && openQuestion(e, QV.cur.next);
-}
-function qvKeys(ev){
-  if(!document.getElementById('qv') || !QV.cur) return;
-  if(ev.key==='Escape') closeQuestion();
-  else if(ev.key==='ArrowLeft' && QV.cur.prev) openQuestion(QV.cur.e, QV.cur.prev);
-  else if(ev.key==='ArrowRight' && QV.cur.next) openQuestion(QV.cur.e, QV.cur.next);
-}
-function closeQuestion(){ const b = document.getElementById('qv'); if(b) b.remove(); document.removeEventListener('keydown', qvKeys); QV.cur = null; }
 
 /* ---------- aba: escolas (admin) / minha escola ---------- */
 function paneEsc(){
