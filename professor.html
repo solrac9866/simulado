@@ -59,6 +59,14 @@ textarea{width:100%;font:inherit;padding:10px;border:1.5px solid var(--bor);bord
 .hb .v{text-align:right;font-variant-numeric:tabular-nums}
 .cl{display:flex;gap:12px;flex-wrap:wrap;font-size:.8rem;margin-bottom:6px}.cl span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;background:var(--c)}
 .dcell{border-radius:8px;padding:3px 8px;font-weight:700;display:inline-block;min-width:58px;text-align:center}
+
+.qmo{position:fixed;inset:0;background:rgba(10,20,35,.62);z-index:50;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:18px 10px}
+.qbox{background:#fff;border-radius:14px;max-width:880px;width:100%;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.qbox img{max-width:100%;height:auto;display:block;margin:10px auto;border:1px solid var(--bor);border-radius:8px}
+.qhd{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.qx{font:inherit;cursor:pointer;border:1.5px solid var(--bor);background:#fff;border-radius:10px;padding:6px 12px;font-weight:700}
+a.qv{color:var(--azul);font-weight:800;text-decoration:underline dotted;cursor:pointer}
+.qopt{margin:6px 0;padding:8px 10px;border:1px solid var(--bor);border-radius:8px}
 </style>
 </head>
 <body>
@@ -213,6 +221,45 @@ function render(){
   document.getElementById('so').onclick = async ()=>{ await sb.auth.signOut(); location.href = location.pathname; };
   ({ sim:paneSim, gab:paneGab, res:paneRes, qst:paneQst, dis:paneDis, esc:paneEsc })[D.tab]();
 }
+
+/* ---------- ver a questão ---------- */
+window.QIMG = window.QIMG || {};
+const QC = {};
+async function qLoad(exId){
+  if(!QC[exId]){
+    const { data } = await sb.from('questions').select('number,subject,support_text,image_url,full_image,statement,options').eq('exam_id', exId);
+    QC[exId] = Object.fromEntries((data||[]).map(q=>[q.number,q]));
+  }
+  if(Object.values(QC[exId]).some(q=>q.full_image) && !window.QIMG[exId]){
+    await new Promise(r=>{ const s=document.createElement('script'); s.src='q-'+exId+'.js'; s.onload=()=>r(); s.onerror=()=>r(); document.head.appendChild(s); });
+  }
+}
+const nl = t => esc(t||'').replace(/\n/g,'<br>');
+async function showQ(exId, n){
+  const mo = document.createElement('div'); mo.className='qmo';
+  mo.innerHTML = '<div class="qbox"><p>Carregando a questão…</p></div>'; document.body.appendChild(mo);
+  const close = ()=>{ mo.remove(); document.removeEventListener('keydown', onk); };
+  const onk = ev=>{ if(ev.key==='Escape') close(); };
+  mo.onclick = ev=>{ if(ev.target===mo) close(); }; document.addEventListener('keydown', onk);
+  try{ await qLoad(exId); }catch(e){}
+  const q = (QC[exId]||{})[n], ex = exById(exId);
+  let body;
+  if(!q) body = '<p class="muted">Não foi possível carregar esta questão.</p>';
+  else {
+    const src = (window.QIMG[exId]||{})[n] || q.image_url;
+    if(q.full_image){
+      body = src ? `<img src="${esc(src)}" alt="Questão ${n}">` : '<p class="muted">Imagem da questão indisponível (o arquivo q-'+esc(exId)+'.js precisa estar no site).</p>';
+    } else {
+      body = `${q.support_text?`<div class="msg">${nl(q.support_text)}</div>`:''}${q.image_url?`<img src="${esc(q.image_url)}" alt="Figura da questão ${n}">`:''}
+        <div style="margin:10px 0">${nl(q.statement)}</div>${['A','B','C','D'].map(L=>`<div class="qopt"><b>${L})</b> ${nl((q.options||{})[L])}</div>`).join('')}`;
+    }
+  }
+  const g = typeof D!=='undefined' && D.key && D.key[exId] ? D.key[exId][n] : null;
+  mo.innerHTML = `<div class="qbox"><div class="qhd"><div><h2 style="margin:0">Questão ${n}${q?' · '+esc(q.subject):''}</h2><div class="muted small">${ex?esc(lbl(ex)):''}${g?' · <b>Gabarito: '+esc(g)+'</b>':''}</div></div><button class="qx">Fechar ✕</button></div>${body}</div>`;
+  mo.querySelector('.qx').onclick = close;
+}
+document.addEventListener('click', ev=>{ const a = ev.target.closest('[data-qv]'); if(a){ ev.preventDefault(); const [e,n] = a.dataset.qv.split('|'); showQ(e, +n); } });
+const qlink = (exId, n, txt) => `<a href="#" class="qv" data-qv="${esc(exId)}|${n}" title="Ver a questão">${txt}</a>`;
 const pane = () => document.getElementById('pane');
 const SUBC = {'Língua Portuguesa':'#0b5cab','Matemática':'#8e44ad','Ciências':'#1f8a4c','Língua Inglesa':'#d35400','Geografia':'#b8860b','História':'#c0392b'};
 const subCol = n => SUBC[n] || '#5d6b7a';
@@ -238,8 +285,8 @@ async function recBlock(exId, cls, sid){
       const l = items.filter(i=>i.subj===sj).sort((a,b)=>a.p-b.p||a.n-b.n);
       const low = l.filter(i=>i.p<40), mid = l.filter(i=>i.p>=40&&i.p<60);
       return `<div class="ch" style="border-top:4px solid ${subCol(sj)}"><h2>${esc(sj)}</h2>
-        ${low.length?`<div style="color:var(--bad);font-weight:700;margin:6px 0">Retomar (${low.length} de ${l.length} questões)</div>${low.map(it=>`<div style="margin:6px 0"><b>Questão ${it.n}</b> · <span style="color:var(--bad);font-weight:700">${it.p}% de acerto</span>${it.st?`<div class="muted small">${esc(it.st.replace(/\s+/g,' ').slice(0,140))}${it.st.length>140?'…':''}</div>`:''}</div>`).join('')}`:'<div style="color:var(--ok);font-weight:700;margin:6px 0">Nenhuma questão abaixo de 40% ✓</div>'}
-        ${mid.length?`<div style="color:#9a6b00;font-weight:700;margin:10px 0 4px">Atenção</div><div>${mid.map(it=>`<span class="dcell" style="background:#fdf0cf;margin:2px 4px 2px 0">Q${it.n} · ${it.p}%</span>`).join('')}</div>`:''}
+        ${low.length?`<div style="color:var(--bad);font-weight:700;margin:6px 0">Retomar (${low.length} de ${l.length} questões)</div>${low.map(it=>`<div style="margin:6px 0">${qlink(exId,it.n,'<b>Questão '+it.n+'</b>')} · <span style="color:var(--bad);font-weight:700">${it.p}% de acerto</span>${it.st?`<div class="muted small">${esc(it.st.replace(/\s+/g,' ').slice(0,140))}${it.st.length>140?'…':''}</div>`:''}</div>`).join('')}`:'<div style="color:var(--ok);font-weight:700;margin:6px 0">Nenhuma questão abaixo de 40% ✓</div>'}
+        ${mid.length?`<div style="color:#9a6b00;font-weight:700;margin:10px 0 4px">Atenção</div><div>${mid.map(it=>`${qlink(exId,it.n,'<span class="dcell" style="background:#fdf0cf;margin:2px 4px 2px 0">Q'+it.n+' · '+it.p+'%</span>')}`).join('')}</div>`:''}
       </div>`; }).join('')}</div>`;
 }
 async function paneDis(){
@@ -491,7 +538,7 @@ async function paneQst(){
     document.getElementById('tb').innerHTML = `<table><tr><th>Q</th><th>Disciplina</th><th>Gabarito</th><th class="n">% acerto</th><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr>
       ${qs.map(q=>{ const r = by[q.number]||{o_a:0,o_b:0,o_c:0,o_d:0,o_hits:0}, p = total? Math.round(r.o_hits/total*100):0, g = key[q.number];
         const alt = {A:r.o_a,B:r.o_b,C:r.o_c,D:r.o_d};
-        return `<tr><td><b>${q.number}</b></td><td>${esc(q.subject)}</td><td>${g||'—'}</td><td class="n">${p}%</td>
+        return `<tr><td>${qlink(e.id,q.number,'<b>'+q.number+'</b>')}</td><td>${esc(q.subject)}</td><td>${g||'—'}</td><td class="n">${p}%</td>
           <td><div class="bar"><i style="width:${p}%;background:${color(p)}"></i></div></td>
           ${['A','B','C','D'].map(L=>`<td style="${g===L?'font-weight:800;color:var(--ok)':''}">${alt[L]}</td>`).join('')}</tr>`; }).join('')}</table>`;
   };
