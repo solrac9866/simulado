@@ -31,34 +31,13 @@ th{background:var(--azul-cl)} td.n,th.n{text-align:right}
 .bar i{display:block;height:100%}
 .msg{border-radius:10px;padding:10px 12px;background:var(--azul-cl);color:var(--azul-esc);margin-bottom:12px}
 .err{background:#fdecea;color:#8a1c14}
-button{font:inherit;cursor:pointer}
-.btn{background:var(--azul);color:#fff;border:0;border-radius:10px;padding:10px 16px;font-weight:700}
-.btn.sec{background:#fff;color:var(--azul);border:1.5px solid var(--azul)}
-.btn:disabled{opacity:.5}.btn.xs{padding:5px 10px;font-size:.82rem}
-.msg.err{background:#fdecea;color:#8a1c14}
-tr.qrow{cursor:pointer} tr.qrow:hover td{background:#f6f9fd}
-.qv{position:fixed;inset:0;background:rgba(10,25,45,.55);z-index:50;display:flex;justify-content:center;align-items:flex-start;overflow-y:auto;padding:16px}
-.qvb{background:#fff;border-radius:14px;max-width:820px;width:100%;padding:18px;margin:auto 0}
-.qvh{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-.qvh h2{margin:0;color:var(--azul-esc)}
-.bloco{display:inline-block;background:var(--azul);color:#fff;font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px;margin-bottom:10px}
-.sup{background:#f8fafc;border-left:4px solid var(--azul);border-radius:8px;padding:12px 14px;margin:0 0 14px}
-.sup p{margin:0 0 .7em}.sup p:last-child{margin:0}
-.qvb table{margin:6px 0}.qvb td,.qvb th{white-space:normal}
-.stmt{font-weight:600;margin:0 0 14px}.stmt p{margin:0}
-.fig{display:block;max-width:100%;height:auto;margin:0 auto 14px;border-radius:8px;border:1px solid var(--bor)}
-.qimg{display:block;width:100%;height:auto;border:1px solid var(--bor);border-radius:8px;margin-bottom:14px}
-.vo{display:flex;gap:12px;align-items:flex-start;border:2px solid var(--bor);border-radius:12px;padding:10px 14px;margin-bottom:8px}
-.vo .l{flex:0 0 30px;height:30px;border-radius:50%;background:var(--azul-cl);color:var(--azul-esc);font-weight:800;display:grid;place-items:center}
-.vo .x{flex:1;padding-top:3px}
-.vo .c{flex:0 0 auto;font-size:.85rem;color:var(--mut);padding-top:5px;white-space:nowrap}
-.vo.ok{border-color:var(--ok);background:#f0faf4}.vo.ok .l{background:var(--ok);color:#fff}
-.vs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
-.vs div{border:2px solid var(--bor);border-radius:10px;padding:8px;text-align:center}
-.vs div.ok{border-color:var(--ok);background:#f0faf4}
-.vs b{display:block;font-size:1.2rem}
-.qvn{display:flex;justify-content:space-between;gap:8px;margin-top:14px}
-@media print{.qvh button,.qvn{display:none}.qv{position:static;background:none;padding:0}}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.ch{border:1px solid var(--bor);border-radius:12px;padding:14px}
+.hb{display:grid;grid-template-columns:130px 1fr 92px;gap:8px;align-items:center;margin:7px 0;font-size:.9rem}
+.hb .t{height:16px;background:#e6ebf1;border-radius:6px;overflow:hidden}.hb .t i{display:block;height:100%;border-radius:6px}
+.hb .v{text-align:right;font-variant-numeric:tabular-nums}
+.cl{display:flex;gap:12px;flex-wrap:wrap;font-size:.8rem;margin-bottom:6px}.cl span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;background:var(--c)}
+.cell{border-radius:8px;padding:3px 8px;font-weight:700;display:inline-block;min-width:58px;text-align:center}
 </style>
 </head>
 <body>
@@ -71,7 +50,7 @@ const app = document.getElementById('app');
 const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const TOKEN = new URLSearchParams(location.search).get('chave') || '';
 const lbl = e => e.grade+'º ano · '+e.day+'º dia';
-const D = { school:'', exams:[], rows:[], tab:'res', ex:'', key:{} };
+const D = { school:'', exams:[], rows:[], tab:'res', ex:'' };
 const exById = id => D.exams.find(e=>e.id===id);
 const fdate = d => d ? new Date(d).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}) : '—';
 
@@ -80,16 +59,16 @@ async function load(){
   if(error || !data){
     app.innerHTML = `<div class="card"><h1>Link inválido ou desativado</h1><p class="muted">Peça à coordenação da escola um link novo de consulta.</p></div>`; return;
   }
-  D.school = data.school; D.exams = data.exams; D.rows = data.rows; D.ex = (D.exams[0]||{}).id || '';
+  D.school = data.school; D.exams = data.exams; D.rows = data.rows; D.sub = null; D.ex = (D.exams[0]||{}).id || '';
   render();
 }
 function render(){
   app.innerHTML = `<div class="card"><h1>Resultados do simulado</h1><div class="muted small">${esc(D.school)} · Simulado SARESP 2026 · somente consulta</div>
-    <div class="tabs"><button class="tab ${D.tab==='res'?'on':''}" data-t="res">Resultados</button><button class="tab ${D.tab==='qst'?'on':''}" data-t="qst">Por questão</button>
+    <div class="tabs"><button class="tab ${D.tab==='res'?'on':''}" data-t="res">Resultados</button><button class="tab ${D.tab==='qst'?'on':''}" data-t="qst">Por questão</button><button class="tab ${D.tab==='dis'?'on':''}" data-t="dis">Por disciplina</button>
     <button class="tab" id="rf">↻ Atualizar</button></div><div id="pane"></div></div>`;
   document.querySelectorAll('.tab[data-t]').forEach(b=> b.onclick = ()=>{ D.tab=b.dataset.t; render(); });
   document.getElementById('rf').onclick = load;
-  (D.tab==='res'?paneRes:paneQst)();
+  (D.tab==='res'?paneRes:D.tab==='dis'?paneDis:paneQst)();
 }
 function paneRes(){
   const pane = document.getElementById('pane');
@@ -119,120 +98,84 @@ function paneRes(){
   };
   fe.onchange = ()=>{ ft.value=''; fill(); draw(); }; ft.onchange = draw; fill(); draw();
 }
+
+const SUBC = {'Língua Portuguesa':'#0b5cab','Matemática':'#8e44ad','Ciências':'#1f8a4c','Língua Inglesa':'#d35400','Geografia':'#b8860b','História':'#c0392b'};
+const subCol = n => SUBC[n] || '#5d6b7a';
+const pcol = p => p>=70?'var(--ok)':p>=40?'#e6a100':'var(--bad)';
+async function paneDis(){
+  const pane = document.getElementById('pane');
+  if(!D.sub){
+    pane.innerHTML = '<div class="msg">Carregando…</div>';
+    const { data, error } = await sb.rpc('view_subject_stats', { p_token:TOKEN });
+    if(error || !data){ pane.innerHTML = '<div class="msg err">Não foi possível carregar os dados por disciplina.</div>'; return; }
+    D.sub = data;
+  }
+  const exs = D.exams.filter(e=>D.sub.some(r=>r.exam_id===e.id));
+  if(!exs.length){ pane.innerHTML = '<div class="msg">Ainda não há alunos que finalizaram a prova.</div>'; return; }
+  if(!exs.some(e=>e.id===D.dex)) D.dex = exs[0].id;
+  pane.innerHTML = `<div class="row"><label>Prova: <select id="fe">${exs.map(e=>`<option value="${e.id}" ${e.id===D.dex?'selected':''}>${lbl(e)}</option>`).join('')}</select></label>
+    <label>Turma: <select id="ft"></select></label><label>Aluno: <select id="fa"></select></label></div><div id="out"></div>`;
+  const fe = document.getElementById('fe'), ft = document.getElementById('ft'), fa = document.getElementById('fa');
+  const ofExam = ()=> D.sub.filter(r=>r.exam_id===fe.value);
+  const fillT = ()=>{ D.dex = fe.value; const t=[...new Set(ofExam().map(r=>r.class))].sort(); ft.innerHTML='<option value="">Todas</option>'+t.map(x=>`<option>${esc(x)}</option>`).join(''); fillA(); };
+  const fillA = ()=>{ const l=ofExam().filter(r=>!ft.value||r.class===ft.value); fa.innerHTML='<option value="">Todos (visão geral)</option>'+l.map((r,i)=>`<option value="${esc(r.class+'|'+r.name+'|'+i)}">${esc(r.name)} · ${esc(r.class)}</option>`).join(''); fa._l=l; draw(); };
+  const draw = ()=>{
+    const l = fa._l, ai = fa.value ? +fa.value.split('|').pop() : -1, one = ai>=0 ? l[ai] : null;
+    const set = one ? [one] : l;
+    const subs = Object.keys((l[0]||{}).subjects||{});
+    const agg = (rows,sj)=>{ let ok=0,t=0; rows.forEach(r=>{ const v=r.subjects[sj]; if(v){ ok+=v[0]; t+=v[1]; } }); return { ok, t, p: t?Math.round(ok/t*100):0 }; };
+    let h = '';
+    if(one){
+      h += `<div class="kpis"><div class="kpi"><b>${esc(one.name)}</b>${esc(one.class)}</div>${subs.map(sj=>{ const v=one.subjects[sj]; return `<div class="kpi"><b>${v[0]}/${v[1]}</b>${esc(sj)}</div>`; }).join('')}</div>`;
+    } else {
+      h += `<div class="kpis"><div class="kpi"><b>${set.length}</b>alunos considerados</div>${subs.map(sj=>`<div class="kpi"><b>${agg(set,sj).p}%</b>${esc(sj)}</div>`).join('')}</div>`;
+    }
+    h += '<div class="g2">';
+    h += `<div class="ch"><h2>${one?'Acertos de '+esc(one.name)+' por disciplina':'Aproveitamento por disciplina'}</h2>${subs.map(sj=>{ const a=agg(set,sj); return `<div class="hb"><span>${esc(sj)}</span><div class="t"><i style="width:${a.p}%;background:${subCol(sj)}"></i></div><span class="v">${one?a.ok+' de '+a.t:a.p+'%'}</span></div>`; }).join('')}
+      <p class="muted small">${one?'Quantidade de questões certas em cada disciplina.':'Porcentagem de acertos de todos os alunos selecionados (cada aluno conta uma vez, pela maior nota).'}</p></div>`;
+    if(!one){
+      h += `<div class="ch"><h2>Média de acertos por aluno</h2>${subs.map(sj=>{ const a=agg(set,sj), mo=set.length?a.ok/set.length:0, mt=set.length?a.t/set.length:0; return `<div class="hb"><span>${esc(sj)}</span><div class="t"><i style="width:${a.p}%;background:${subCol(sj)}"></i></div><span class="v">${mo.toFixed(1)} de ${mt}</span></div>`; }).join('')}
+        <p class="muted small">Em média, quantas questões cada aluno acertou em cada disciplina.</p></div>`;
+      const turmas = [...new Set(l.map(r=>r.class))].sort();
+      if(turmas.length>1){
+        h += `<div class="ch" style="grid-column:1/-1"><h2>Comparação entre turmas</h2><div class="cl">${subs.map(sj=>`<span style="--c:${subCol(sj)}">${esc(sj)}</span>`).join('')}</div>
+          ${turmas.map(t=>{ const rs=l.filter(r=>r.class===t); return `<div style="margin:10px 0"><b>${esc(t)}</b> <span class="muted small">(${rs.length} aluno${rs.length>1?'s':''})</span>${subs.map(sj=>{ const a=agg(rs,sj); return `<div class="hb" style="grid-template-columns:96px 1fr 48px"><span class="muted small">${esc(sj.replace('Língua ','L. '))}</span><div class="t"><i style="width:${a.p}%;background:${subCol(sj)}"></i></div><span class="v">${a.p}%</span></div>`; }).join('')}</div>`; }).join('')}</div>`;
+      }
+      // distribuição de acertos em cada disciplina (faixas)
+      h += `<div class="ch" style="grid-column:1/-1"><h2>Quantos alunos em cada faixa de acerto</h2>${subs.map(sj=>{ const b=[0,0,0]; set.forEach(r=>{ const v=r.subjects[sj]; const p=v[1]?v[0]/v[1]*100:0; b[p>=70?2:p>=40?1:0]++; }); const n=set.length||1;
+        return `<div style="margin:10px 0"><b>${esc(sj)}</b><div style="display:flex;height:22px;border-radius:7px;overflow:hidden;margin-top:4px;font-size:.78rem;color:#fff;font-weight:700">
+          <div style="width:${b[0]/n*100}%;background:var(--bad);text-align:center">${b[0]||''}</div><div style="width:${b[1]/n*100}%;background:#e6a100;text-align:center">${b[1]||''}</div><div style="width:${b[2]/n*100}%;background:var(--ok);text-align:center">${b[2]||''}</div></div></div>`; }).join('')}
+        <div class="cl"><span style="--c:var(--bad)">menos de 40%</span><span style="--c:#e6a100">40% a 69%</span><span style="--c:var(--ok)">70% ou mais</span></div></div>`;
+    }
+    h += '</div>';
+    h += `<h2 style="margin-top:16px">Acertos por aluno</h2><div class="tw"><table><tr><th>Aluno</th><th>Turma</th>${subs.map(sj=>`<th class="n">${esc(sj)}</th>`).join('')}<th class="n">Total</th></tr>
+      ${set.map(r=>{ let ok=0,t=0; const cells=subs.map(sj=>{ const v=r.subjects[sj]||[0,0]; ok+=v[0]; t+=v[1]; const p=v[1]?Math.round(v[0]/v[1]*100):0; const bg=p>=70?'#dff3e7':p>=40?'#fdf0cf':'#fbe0dc'; return `<td class="n"><span class="cell" style="background:${bg}">${v[0]}/${v[1]}</span></td>`; }).join('');
+        return `<tr><td>${esc(r.name)}</td><td>${esc(r.class)}</td>${cells}<td class="n"><b>${ok}/${t}</b></td></tr>`; }).join('')}</table></div>
+      <p class="muted small">Considera só a prova finalizada com a maior nota de cada aluno. Questão em branco conta como erro.</p>`;
+    document.getElementById('out').innerHTML = h;
+  };
+  fe.onchange = fillT; ft.onchange = fillA; fa.onchange = draw; fillT();
+}
 async function paneQst(){
   const pane = document.getElementById('pane');
   pane.innerHTML = `<div class="row"><label>Prova: <select id="fe">${D.exams.map(e=>`<option value="${e.id}" ${e.id===D.ex?'selected':''}>${lbl(e)}</option>`).join('')}</select></label>
     <label>Turma: <select id="ft"></select></label></div><div id="bl"></div><div class="tw" id="tb">Carregando…</div>`;
   const fe = document.getElementById('fe'), ft = document.getElementById('ft');
   const fill = ()=>{ const t = [...new Set(D.rows.filter(r=>r.exam_id===fe.value).map(r=>r.class))].sort(); ft.innerHTML = '<option value="">Todas</option>'+t.map(x=>`<option>${esc(x)}</option>`).join(''); };
-  let seq = 0;
   const draw = async ()=>{
-    const my = ++seq, exId = fe.value, cls = ft.value||null;
-    D.ex = exId;
-    const [st, dt] = await Promise.all([
-      sb.rpc('view_question_stats', { p_token:TOKEN, p_exam:exId, p_class:cls }),
-      sb.rpc('view_question_detail', { p_token:TOKEN, p_exam:exId, p_class:cls })
-    ]);
-    if(my !== seq) return;
-    const { data, error } = st; const det = {}; (dt.data||[]).forEach(r=> det[r.o_q] = r);
-    D.key[exId] = {}; Object.values(det).forEach(r=>{ if(r.o_correct) D.key[exId][r.o_q] = r.o_correct; });
+    D.ex = fe.value;
+    const { data, error } = await sb.rpc('view_question_stats', { p_token:TOKEN, p_exam:fe.value, p_class:ft.value||null });
     if(error){ document.getElementById('tb').innerHTML = '<div class="msg err">Não foi possível carregar.</div>'; return; }
     const total = data.length ? data[0].o_students : 0;
     const subj = {}; data.forEach(r=>{ (subj[r.o_subject] ||= []).push(r.o_pct); });
     document.getElementById('bl').innerHTML = `<div class="kpis">${Object.entries(subj).map(([n,a])=>`<div class="kpi"><b>${total?Math.round(a.reduce((x,y)=>x+y,0)/a.length)+'%':'—'}</b>${esc(n)}</div>`).join('')}</div>
-      <p class="muted small">Base: ${total} aluno(s) que finalizaram. Questão em branco conta como erro. Nas colunas A a D, quantos alunos marcaram cada alternativa: <b style="color:var(--ok)">verde</b> é o gabarito e <b style="color:var(--bad)">vermelho</b> é a errada que teve mais votos que a certa. <b>Toque em uma questão para ver o enunciado completo.</b></p>`;
+      <p class="muted small">Base: ${total} aluno(s) que finalizaram. Questão em branco conta como erro.</p>`;
     const color = p => p>=70?'var(--ok)':p>=40?'#e6a100':'var(--bad)';
-    const altCells = q => { const d = det[q]||{}, c = { A:d.o_a||0, B:d.o_b||0, C:d.o_c||0, D:d.o_d||0 }, g = d.o_correct;
-      const mx = Math.max(...['A','B','C','D'].filter(L=>L!==g).map(L=>c[L]));
-      const br = Math.max(0, total - c.A - c.B - c.C - c.D);
-      return ['A','B','C','D'].map(L=>`<td class="n" style="${L===g?'font-weight:800;color:var(--ok)':(c[L]&&c[L]===mx&&c[L]>(c[g]||0)?'font-weight:800;color:var(--bad)':'')}">${c[L]}</td>`).join('')+`<td class="n muted">${br}</td>`; };
-    document.getElementById('tb').innerHTML = `<table><tr><th>Questão</th><th>Disciplina</th><th>Gabarito</th><th class="n">% de acerto</th><th></th><th class="n">A</th><th class="n">B</th><th class="n">C</th><th class="n">D</th><th class="n">Branco</th><th></th></tr>
-      ${data.map(r=>`<tr class="qrow" data-q="${r.o_q}" title="Ver a questão ${r.o_q}"><td><b>${r.o_q}</b></td><td>${esc(r.o_subject)}</td><td><b style="color:var(--ok)">${(det[r.o_q]||{}).o_correct||'—'}</b></td><td class="n">${r.o_pct}%</td><td><div class="bar"><i style="width:${r.o_pct}%;background:${color(r.o_pct)}"></i></div></td>${altCells(r.o_q)}<td><button class="btn xs sec">Ver</button></td></tr>`).join('')}</table>`;
-    const by = {}; data.forEach(r=>{ const d = det[r.o_q]||{}; by[r.o_q] = { o_a:d.o_a||0, o_b:d.o_b||0, o_c:d.o_c||0, o_d:d.o_d||0, o_hits:Math.round(r.o_pct*total/100) }; });
-    QV.stats = { by, total, cls:cls||'' };
-    const e = exById(exId);
-    document.querySelectorAll('tr.qrow').forEach(tr=> tr.onclick = ()=> openQuestion(e, Number(tr.dataset.q)));
+    document.getElementById('tb').innerHTML = `<table><tr><th>Questão</th><th>Disciplina</th><th class="n">% de acerto</th><th></th></tr>
+      ${data.map(r=>`<tr><td><b>${r.o_q}</b></td><td>${esc(r.o_subject)}</td><td class="n">${r.o_pct}%</td><td><div class="bar"><i style="width:${r.o_pct}%;background:${color(r.o_pct)}"></i></div></td></tr>`).join('')}</table>`;
   };
   fe.onchange = ()=>{ fill(); draw(); }; ft.onchange = draw; fill(); draw();
 }
-/* ---------- visualizar a questão completa ---------- */
-const QV = { cache:{}, stats:null };
-function inl(t){
-  return esc(t).replace(/\*\*\*(.+?)\*\*\*/g,'<b><i>$1</i></b>').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
-    .replace(/\*(.+?)\*/g,'<i>$1</i>').replace(/\bT_([FC])\b/g,'T<sub>$1</sub>');
-}
-function md(t){
-  if(!t) return '';
-  return t.split(/\n\s*\n/).map(b=>{
-    const lines = b.split('\n');
-    if(lines[0].trim().startsWith('|')){
-      const rows = lines.filter(l=>l.trim().startsWith('|')).map(l=>l.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim()));
-      return '<div class="tw"><table>'+rows.map((r,i)=>'<tr>'+r.map(c=>i===0?`<th>${inl(c)}</th>`:`<td>${inl(c)}</td>`).join('')+'</tr>').join('')+'</table></div>';
-    }
-    if(lines.every(l=>/^\d+\.\s/.test(l.trim()))) return '<ol>'+lines.map(l=>`<li>${inl(l.trim().replace(/^\d+\.\s/,''))}</li>`).join('')+'</ol>';
-    return '<p>'+lines.map(inl).join('<br>')+'</p>';
-  }).join('');
-}
-async function examQuestions(id){
-  if(QV.cache[id]) return QV.cache[id];
-  const { data, error } = await sb.from('questions')
-    .select('number,block,subject,support_text,image_url,full_image,statement,options').eq('exam_id', id).order('number');
-  if(error) throw error;
-  if(data.some(q=>q.full_image) && !(window.QIMG && window.QIMG[id])){
-    await new Promise(res=>{ const s = document.createElement('script'); s.src = 'q-'+id+'.js'; s.onload = s.onerror = res; document.head.appendChild(s); });
-  }
-  return (QV.cache[id] = data);
-}
-async function openQuestion(e, n){
-  let box = document.getElementById('qv');
-  if(!box){
-    box = document.createElement('div'); box.id = 'qv'; box.className = 'qv';
-    box.onclick = ev=>{ if(ev.target===box) closeQuestion(); };
-    document.body.appendChild(box);
-    document.addEventListener('keydown', qvKeys);
-  }
-  box.innerHTML = '<div class="qvb"><p class="muted">Carregando a questão…</p></div>';
-  let qs;
-  try{ qs = await examQuestions(e.id); }
-  catch(err){ box.innerHTML = `<div class="qvb"><div class="msg err">Não foi possível carregar a questão: ${esc(err.message||err)}</div><button class="btn sec" id="qx">Fechar</button></div>`; document.getElementById('qx').onclick = closeQuestion; return; }
-  const i = qs.findIndex(q=>q.number===n), q = qs[i];
-  if(!q){ closeQuestion(); return; }
-  const g = (D.key[e.id]||{})[n];
-  const st = QV.stats || { by:{}, total:0 }, r = st.by[n] || { o_a:0,o_b:0,o_c:0,o_d:0,o_hits:0 };
-  const cnt = { A:r.o_a, B:r.o_b, C:r.o_c, D:r.o_d };
-  const pct = L => st.total ? Math.round(cnt[L]/st.total*100)+'%' : '—';
-  const img = q.full_image ? ((window.QIMG && window.QIMG[e.id] && window.QIMG[e.id][q.number]) || q.image_url) : '';
-  const body = q.full_image
-    ? (img ? `<img class="qimg" src="${esc(img)}" alt="Questão ${q.number}">` : '<div class="msg err">Imagem da questão não encontrada.</div>')
-      + `<div class="vs">${['A','B','C','D'].map(L=>`<div class="${g===L?'ok':''}"><b>${L}${g===L?' ✓':''}</b><span class="small">${cnt[L]} · ${pct(L)}</span></div>`).join('')}</div>`
-    : `${q.support_text?`<div class="sup">${md(q.support_text)}</div>`:''}
-       ${q.image_url?`<img class="fig" src="${esc(q.image_url)}" alt="Figura da questão ${q.number}">`:''}
-       <div class="stmt">${md(q.statement)}</div>
-       ${['A','B','C','D'].map(L=>`<div class="vo ${g===L?'ok':''}"><span class="l">${L}</span><span class="x">${inl((q.options||{})[L]||'')}</span><span class="c">${cnt[L]} · ${pct(L)}</span></div>`).join('')}`;
-  const hit = st.total ? Math.round(r.o_hits/st.total*100)+'% de acerto' : 'sem respostas ainda';
-  box.innerHTML = `<div class="qvb">
-    <div class="qvh"><h2>Questão ${String(q.number).padStart(2,'0')} · ${esc(lbl(e))}</h2>
-      <div><button class="btn xs sec" id="qp">Imprimir</button> <button class="btn xs" id="qx">✕ Fechar</button></div></div>
-    <span class="bloco">Bloco ${q.block} · ${esc(q.subject)}</span>
-    <p class="small muted" style="margin:0 0 12px">Gabarito: <b style="color:var(--ok)">${g||'não cadastrado'}</b> · ${hit}${st.cls?' na turma '+esc(st.cls):''} · base ${st.total} aluno(s)</p>
-    ${body}
-    <div class="qvn"><button class="btn sec" id="qa" ${i>0?'':'disabled'}>← Anterior</button><span class="muted small" style="align-self:center">${i+1} de ${qs.length}</span><button class="btn sec" id="qn" ${i<qs.length-1?'':'disabled'}>Próxima →</button></div>
-  </div>`;
-  box.scrollTop = 0;
-  QV.cur = { e, prev: i>0 ? qs[i-1].number : null, next: i<qs.length-1 ? qs[i+1].number : null };
-  document.getElementById('qx').onclick = closeQuestion;
-  document.getElementById('qp').onclick = ()=> window.print();
-  document.getElementById('qa').onclick = ()=> QV.cur.prev && openQuestion(e, QV.cur.prev);
-  document.getElementById('qn').onclick = ()=> QV.cur.next && openQuestion(e, QV.cur.next);
-}
-function qvKeys(ev){
-  if(!document.getElementById('qv') || !QV.cur) return;
-  if(ev.key==='Escape') closeQuestion();
-  else if(ev.key==='ArrowLeft' && QV.cur.prev) openQuestion(QV.cur.e, QV.cur.prev);
-  else if(ev.key==='ArrowRight' && QV.cur.next) openQuestion(QV.cur.e, QV.cur.next);
-}
-function closeQuestion(){ const b = document.getElementById('qv'); if(b) b.remove(); document.removeEventListener('keydown', qvKeys); QV.cur = null; }
-
 load();
 </script>
 </body>
