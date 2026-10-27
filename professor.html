@@ -460,7 +460,19 @@ function paneRes(){
     <div id="kp"></div><h2 style="margin-top:14px">Resumo por turma</h2><div class="tw" id="rt"></div>
     <h2 style="margin-top:14px">Alunos</h2><div class="tw" id="tb"></div><div id="fm"></div></div>`;
   const fe = document.getElementById('fe'), ft = document.getElementById('ft'), fs = document.getElementById('fs');
-  const base = ()=> D.subs.filter(s=>(!fs||!fs.value||s.school_id===fs.value) && (!fe.value||s.exam_id===fe.value));
+  /* Só no Rosa Maria: nome repetido (mesma prova e turma) mostra apenas a tentativa mais recente */
+  const normNome = n => String(n||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+  const soUltima = rows => {
+    const ult = new Map();
+    rows.forEach(s=>{
+      if((schoolOf(s.school_id)||{}).slug !== 'rosa-maria') return;
+      const k = s.school_id+'|'+s.exam_id+'|'+normNome(s.class_name)+'|'+normNome(s.student_name);
+      const o = ult.get(k);
+      if(!o || new Date(s.started_at) > new Date(o.started_at)) ult.set(k, s);
+    });
+    return rows.filter(s=> (schoolOf(s.school_id)||{}).slug !== 'rosa-maria' || ult.get(s.school_id+'|'+s.exam_id+'|'+normNome(s.class_name)+'|'+normNome(s.student_name)) === s);
+  };
+  const base = ()=> soUltima(D.subs.filter(s=>(!fs||!fs.value||s.school_id===fs.value) && (!fe.value||s.exam_id===fe.value)));
   const fillTurmas = ()=>{
     const cur = ft.value;
     const t = [...new Set(base().map(s=>s.class_name))].sort();
